@@ -45,7 +45,7 @@ public interface IScrollable extends IContentHolder, IOffset
 
 	public default float getScrollStep()
 	{
-		return (GuiScreen.isCtrlKeyDown() ? 0.125F : 0.025F);
+		return (GuiScreen.isCtrlKeyDown() ? 0.125F : 0.25F);
 	}
 
 }
