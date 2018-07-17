@@ -32,7 +32,7 @@ import org.spongepowered.asm.mixin.Mixins;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin.TransformerExclusions;
 
-@TransformerExclusions({ "net.malisis.core.asm." })
+//@TransformerExclusions({ "net.malisis.core.asm." })
 @IFMLLoadingPlugin.SortingIndex(1001)
 public class MalisisCorePlugin implements IFMLLoadingPlugin
 {
