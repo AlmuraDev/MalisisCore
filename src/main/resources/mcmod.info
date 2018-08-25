@@ -7,7 +7,7 @@
   "mcversion": "${mcversion}",
   "url": "${url}",
   "updateUrl": "",
-  "authorList": [ "Ordinastie", "PaleoCrafter" ],
+  "authorList": [ "Ordinastie", "PaleoCrafter", "AlmuraDev" ],
   "logoFile": "malisiscore.png",
   "parent": "",
   "screenshots": [],
