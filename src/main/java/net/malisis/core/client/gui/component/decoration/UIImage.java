@@ -34,6 +34,7 @@ import net.malisis.core.client.gui.render.IGuiRenderer;
 import net.malisis.core.client.gui.render.shape.GuiShape;
 import net.malisis.core.renderer.icon.Icon;
 import net.minecraft.item.ItemStack;
+import org.lwjgl.opengl.GL11;
 
 /**
  * UIImage.
@@ -50,7 +51,11 @@ public class UIImage extends UIComponent
 	private ItemStack itemStack;
 
 	private final IGuiRenderer ICON_RENDER = GuiShape.builder(this).icon(this::getIcon).build();
-	private final IGuiRenderer IS_RENDER = (r) -> r.drawItemStack(itemStack);
+	private final IGuiRenderer IS_RENDER = (r) -> {
+		GL11.glDisable(GL11.GL_DEPTH_TEST);
+		r.drawItemStack(itemStack);
+		GL11.glEnable(GL11.GL_DEPTH_TEST);
+	};
 
 	/**
 	 * Instantiates a new {@link UIImage}.
