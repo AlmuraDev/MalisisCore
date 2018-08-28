@@ -341,6 +341,9 @@ public class MalisisFont
 
 	protected void drawLine(CharData cd, float offsetX, float offsetY, FontOptions options, int color)
 	{
+		if (Character.isWhitespace(cd.getChar()))
+			return;
+
 		BufferBuilder buffer = Tessellator.getInstance().getBuffer();
 		float factor = options.getFontScale() / fontGeneratorOptions.fontSize * 9;
 		float w = cd.getFullWidth(fontGeneratorOptions) * factor + options.getFontScale();
