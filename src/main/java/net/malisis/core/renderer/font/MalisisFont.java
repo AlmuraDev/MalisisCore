@@ -341,7 +341,7 @@ public class MalisisFont
 
 	protected void drawLine(CharData cd, float offsetX, float offsetY, FontOptions options, int color)
 	{
-		if (Character.isWhitespace(cd.getChar()))
+		if (cd.getChar() == '\r' || cd.getChar() == '\n')
 			return;
 
 		BufferBuilder buffer = Tessellator.getInstance().getBuffer();
