@@ -96,6 +96,11 @@ public class UISlider<T> extends UIComponent implements IContentHolder
 		return text;
 	}
 
+	public UISlider<T> setHoveredFontOptions(FontOptions fontOptions) {
+		this.hoveredFontOptions = fontOptions;
+		return this;
+	}
+
 	/**
 	 * Sets the value for this {@link UISlider}.
 	 *
