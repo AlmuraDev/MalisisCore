@@ -108,7 +108,7 @@ public class MalisisModel implements ITransformable.Translate, ITransformable.Ro
 
 		IModelLoader loader = null;
 		IAnimationLoader animLoader = null;
-		if (resource.getNamespace().endsWith(".obj"))
+		if (resource.getPath().endsWith(".obj"))
 		{
 			loader = new ObjFileImporter(resource);
 			animLoader = new AnimationImporter(new ResourceLocation(resource.toString() + ".anim"));
