@@ -415,7 +415,7 @@ public class UITextField extends UIComponent implements IContentHolder, IClipabl
 		if (selectingText)
 			deleteSelectedText();
 
-		final StringBuilder oldText = this.text;
+		final StringBuilder oldText = new StringBuilder(this.text.toString());
 		final String oldValue = this.text.toString();
 		String newValue = oldText.insert(this.cursor.index, str).toString();
 
