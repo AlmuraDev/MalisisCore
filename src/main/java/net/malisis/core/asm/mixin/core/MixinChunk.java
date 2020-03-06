@@ -51,9 +51,14 @@ public class MixinChunk
 	{
 		Chunk chunk = (Chunk) (Object) this;
 		oldState = chunk.getBlockState(pos);
-		CallbackResult<Void> cb = Registries.processPreSetBlock(chunk, pos, oldState, newState);
-		if (cb.shouldReturn())
-			cir.cancel();
+		if (oldState != null) {
+			CallbackResult<Void> cb = Registries.processPreSetBlock(chunk, pos, oldState, newState);
+			if (cb != null) {
+				if (cb.shouldReturn()) {
+					cir.cancel();
+				}
+			}
+		}
 	}
 
 	@Inject(method = "setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;)Lnet/minecraft/block/state/IBlockState;",
