@@ -191,6 +191,9 @@ public final class UIButtonBuilder {
     if (this.text != null) {
       button.setText(this.text);
     }
+    if (this.fontOptions != null) {
+      button.setFontOptions(this.fontOptions);
+    }
     if (this.image != null) {
       button.setImage(this.image);
     }
@@ -208,9 +211,6 @@ public final class UIButtonBuilder {
     }
     if (this.object != null) {
       button.register(this.object);
-    }
-    if (this.fontOptions != null) {
-      button.setFontOptions(this.fontOptions);
     }
     if (this.hoverFontOptions != null) {
       button.setHoveredFontOptions(this.hoverFontOptions);
