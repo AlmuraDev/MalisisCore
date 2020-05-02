@@ -364,7 +364,10 @@ public class BasicList<T> extends BasicContainer<BasicList<T>> {
     this.isDirty = true;
   }
 
-  private void createItemComponents() {
+   /**
+   * Creates item components based on the current factory and data set
+   */
+  public void createItemComponents() {
     final float scrollPoint = this.getScrollBar().getOffset();
     final Integer focusedX = MalisisGui.getFocusedComponent() == null ? null : MalisisGui.getFocusedComponent().screenX();
     final Integer focusedY = MalisisGui.getFocusedComponent() == null ? null : MalisisGui.getFocusedComponent().screenY();
