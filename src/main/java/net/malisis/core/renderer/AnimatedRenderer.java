@@ -57,8 +57,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  */
 public class AnimatedRenderer extends MalisisRenderer<TileEntity>
 {
-	/** Map of {@link ISortedRenderable} per {@link BlockPos}. */
-	private static Map<BlockPos, IAnimatedRenderable> animatedRenderables = Maps.newHashMap();
+	/** Map of {@link IAnimatedRenderable} per {@link BlockPos}. */
+	private static Map<BlockPos, IAnimatedRenderable> animatedRenderables = Maps.newConcurrentMap();
 	static
 	{
 		//check renderable to be removed when a block changes.
