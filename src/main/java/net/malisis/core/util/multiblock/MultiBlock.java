@@ -49,7 +49,7 @@ import net.minecraft.world.World;
  * @author Ordinastie
  *
  */
-@AutoLoad
+@AutoLoad(false) //was true.
 public abstract class MultiBlock implements Iterable<MBlockState>
 {
 	public static String ORIGIN_BLOCK_DATA = MalisisCore.modid + ":multiBlockOrigin";

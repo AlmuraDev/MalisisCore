@@ -78,7 +78,7 @@ public class Syncer
 	/** Syncer instance **/
 	public static final Syncer instance = new Syncer();
 
-	private Syncer()
+	public Syncer()
 	{
 		registerFactory("TileEntity", TileEntitySyncHandler::new);
 		MalisisCommand.registerDebug("syncer", Syncer::debug);

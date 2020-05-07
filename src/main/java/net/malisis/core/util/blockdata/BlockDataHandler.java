@@ -70,7 +70,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 @AutoLoad
 public class BlockDataHandler
 {
-	private static BlockDataHandler instance = new BlockDataHandler();
+	public static BlockDataHandler instance = new BlockDataHandler();
 	private static Field chunkCacheField;
 	private static Class<?> chunkCacheClass;
 
@@ -87,7 +87,7 @@ public class BlockDataHandler
 	private Map<String, HandlerInfo<?>> handlerInfos = new HashMap<>();
 	private static final ThreadLocal<Table<String, Chunk, ChunkData<?>>> datas = ThreadLocal.withInitial(HashBasedTable::create);
 
-	private BlockDataHandler()
+	public BlockDataHandler()
 	{
 		MinecraftForge.EVENT_BUS.register(this);
 	}
