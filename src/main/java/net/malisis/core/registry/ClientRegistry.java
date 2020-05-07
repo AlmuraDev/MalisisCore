@@ -69,6 +69,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * @author Ordinastie
  *
  */
+
 @SideOnly(Side.CLIENT)
 @AutoLoad
 public class ClientRegistry
@@ -86,7 +87,7 @@ public class ClientRegistry
 	/** List of {@link ItemRendererOverride}. */
 	List<ItemRendererOverride> itemRendererOverrides = Lists.newArrayList();
 
-	ClientRegistry()
+	public ClientRegistry()
 	{
 		MinecraftForge.EVENT_BUS.register(this);
 		MalisisRegistry.onInit(e -> {

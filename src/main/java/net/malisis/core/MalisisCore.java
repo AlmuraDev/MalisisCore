@@ -198,6 +198,7 @@ public class MalisisCore implements IMalisisMod
 
 				Class<?> clazz = Class.forName(data.getClassName());
 				AutoLoad anno = clazz.getAnnotation(AutoLoad.class);
+				System.out.println("Autoloading Class: " + clazz);
 				if (anno.value())
 					clazz.newInstance();
 			}
