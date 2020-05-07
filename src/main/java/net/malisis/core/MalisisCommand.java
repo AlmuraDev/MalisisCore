@@ -62,10 +62,12 @@ public class MalisisCommand extends CommandBase
 	 */
 	public MalisisCommand()
 	{
-		ClientCommandHandler.instance.registerCommand(this);
-		parameters.add("config");
-		parameters.add("version");
-		parameters.add("debug");
+		if (FMLCommonHandler.instance().getSide().isClient()) {
+			ClientCommandHandler.instance.registerCommand(this);
+			parameters.add("config");
+			parameters.add("version");
+			parameters.add("debug");
+		}
 	}
 
 	public static void registerDebug(String name, Runnable command)
