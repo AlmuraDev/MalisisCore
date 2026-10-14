@@ -24,6 +24,7 @@
 
 package net.malisis.core.client.gui.component.control;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -57,7 +58,11 @@ public class UIScrollBar extends UIComponent<UIScrollBar> implements IControlCom
 		VERTICAL
 	}
 
-	private static Map<UIComponent<?>, Map<Type, UIScrollBar>> scrollbars = new WeakHashMap<>();
+	/**
+	 * The scrollbars of each component. The values are weak too: a scrollbar references its parent (the key), so a strong value would
+	 * keep the key, and with it the whole closed GUI, alive forever. The parent holds its scrollbars strongly as control components.
+	 */
+	private static Map<UIComponent<?>, Map<Type, WeakReference<UIScrollBar>>> scrollbars = new WeakHashMap<>();
 
 	/** The scroll thickness (Width for vertical, height for horizontal). */
 	protected int scrollThickness = 10;
@@ -447,11 +452,12 @@ public class UIScrollBar extends UIComponent<UIScrollBar> implements IControlCom
 	 */
 	public static UIScrollBar getScrollbar(UIComponent<?> component, Type type)
 	{
-		Map<Type, UIScrollBar> bars = scrollbars.get(component);
+		Map<Type, WeakReference<UIScrollBar>> bars = scrollbars.get(component);
 		if (bars == null)
 			return null;
 
-		return bars.get(type);
+		WeakReference<UIScrollBar> ref = bars.get(type);
+		return ref != null ? ref.get() : null;
 	}
 
 	/**
@@ -462,14 +468,7 @@ public class UIScrollBar extends UIComponent<UIScrollBar> implements IControlCom
 	 */
 	private static void addScrollbar(UIComponent<?> component, UIScrollBar scrollbar)
 	{
-		Map<Type, UIScrollBar> bars = scrollbars.get(component);
-		if (bars == null)
-		{
-			bars = new HashMap<>();
-			scrollbars.put(component, bars);
-		}
-
-		bars.put(scrollbar.type, scrollbar);
+		scrollbars.computeIfAbsent(component, c -> new HashMap<>()).put(scrollbar.type, new WeakReference<>(scrollbar));
 	}
 
 }

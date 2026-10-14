@@ -62,7 +62,7 @@ public class InventoryActionMessage implements IMalisisMessageHandler<InventoryA
 	public void process(Packet message, MessageContext ctx)
 	{
 		Container c = ctx.getServerHandler().player.openContainer;
-		if (message.windowId != c.windowId || !(c instanceof MalisisInventoryContainer))
+		if (message.action == null || message.windowId != c.windowId || !(c instanceof MalisisInventoryContainer))
 			return;
 
 		MalisisInventoryContainer container = (MalisisInventoryContainer) c;
@@ -112,7 +112,9 @@ public class InventoryActionMessage implements IMalisisMessageHandler<InventoryA
 		@Override
 		public void fromBytes(ByteBuf buf)
 		{
-			action = ActionType.values()[buf.readByte()];
+			//from the client: an unknown action is ignored (see process) rather than throwing in the decoder and kicking the player
+			int ordinal = buf.readByte();
+			action = ordinal >= 0 && ordinal < ActionType.values().length ? ActionType.values()[ordinal] : null;
 			inventoryId = buf.readInt();
 			slotNumber = buf.readInt();
 			code = buf.readInt();

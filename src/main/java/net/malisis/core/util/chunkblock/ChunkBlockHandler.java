@@ -25,7 +25,9 @@
 package net.malisis.core.util.chunkblock;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -51,11 +53,14 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkDataEvent;
+import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.event.world.ChunkWatchEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
@@ -72,6 +77,8 @@ public class ChunkBlockHandler
 
 	private WeakNested.Set<Chunk, BlockPos> serverChunks = new WeakNested.Set<>(Sets::newHashSet);
 	private WeakNested.Set<Chunk, BlockPos> clientChunks = new WeakNested.Set<>(Sets::newHashSet);
+	/** Client only: coordinates received for chunks the client hadn't loaded yet, applied when they load (see {@link #setCoords}). */
+	private final Map<Long, Set<BlockPos>> pendingClientCoords = new HashMap<>();
 
 	//	private Map<Chunk, List<BlockPos>> serverChunks = new WeakHashMap<>();
 	//	private Map<Chunk, List<BlockPos>> clientChunks = new WeakHashMap<>();
@@ -271,8 +278,85 @@ public class ChunkBlockHandler
 	 */
 	public void setCoords(int chunkX, int chunkZ, Set<BlockPos> coords)
 	{
-		Chunk chunk = Utils.getClientWorld().getChunk(chunkX, chunkZ);
+		//not getChunk(): for a chunk that isn't loaded yet it returns the shared empty chunk, and the coordinates were stored on it and lost
+		//(e.g. the big doors' collision and click boxes missing after rejoining a world, depending on timing)
+		Chunk chunk = Utils.getClientWorld().getChunkProvider().getLoadedChunk(chunkX, chunkZ);
+		if (chunk == null || chunk.isEmpty())
+		{
+			pendingClientCoords.computeIfAbsent(ChunkPos.asLong(chunkX, chunkZ), k -> Sets.newHashSet()).addAll(coords);
+			return;
+		}
 		chunks(chunk).addAll(chunk, coords);
+	}
+
+	/**
+	 * Server: rebuilds the coordinates of the {@link IChunkBlock} blocks with a tile entity (see {@link #rebuildFromTileEntities}).<br>
+	 * Client: applies the coordinates received before the {@link Chunk} was loaded.
+	 *
+	 * @param event the event
+	 */
+	@SubscribeEvent
+	public void onChunkLoad(ChunkEvent.Load event)
+	{
+		if (!event.getWorld().isRemote)
+		{
+			rebuildFromTileEntities(event.getChunk());
+			return;
+		}
+		if (pendingClientCoords.isEmpty())
+			return;
+		Chunk chunk = event.getChunk();
+		Set<BlockPos> coords = pendingClientCoords.remove(ChunkPos.asLong(chunk.x, chunk.z));
+		if (coords != null)
+			chunks(chunk).addAll(chunk, coords);
+	}
+
+	/**
+	 * Server only.<br>
+	 * Records the coordinates of the {@link IChunkBlock} blocks that have a tile entity, in the loaded {@link Chunk} and in the loaded
+	 * chunks around it that reach into it. The coordinates saved in the chunk's NBT may be missing: under Sponge, the server's set block
+	 * callbacks never ran before MixinChunk hooked Sponge's bridge$setBlockState(), so blocks placed before that (e.g. big doors) were never
+	 * recorded, and opening a big door doesn't set its block so they never got recorded afterwards either.
+	 *
+	 * @param chunk the chunk
+	 */
+	private void rebuildFromTileEntities(Chunk chunk)
+	{
+		World world = chunk.getWorld();
+		for (int dx = -1; dx <= 1; dx++)
+		{
+			for (int dz = -1; dz <= 1; dz++)
+			{
+				Chunk source = dx == 0 && dz == 0 ? chunk : world.getChunkProvider().getLoadedChunk(chunk.x + dx, chunk.z + dz);
+				if (source == null)
+					continue;
+				for (BlockPos pos : new ArrayList<>(source.getTileEntityMap().keySet()))
+				{
+					IChunkBlock cb = IComponent.getComponent(IChunkBlock.class, source.getBlockState(pos).getBlock());
+					if (cb == null)
+						continue;
+					//in this chunk: record it in every loaded chunk it reaches (this one and its loaded neighbors)
+					if (source == chunk)
+						addCoord(world, pos, cb.blockRange());
+					//in a neighbor: record it in this chunk if it reaches into it
+					else if (getAffectedChunks(world, pos.getX(), pos.getZ(), cb.blockRange()).contains(chunk))
+						addCoord(chunk, pos);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Client only.<br>
+	 * Forgets the pending coordinates of the world being left.
+	 *
+	 * @param event the event
+	 */
+	@SubscribeEvent
+	public void onWorldUnload(WorldEvent.Unload event)
+	{
+		if (event.getWorld().isRemote)
+			pendingClientCoords.clear();
 	}
 
 	//#end Events

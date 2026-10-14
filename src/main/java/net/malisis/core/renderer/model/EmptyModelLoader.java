@@ -69,10 +69,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class EmptyModelLoader implements ICustomModelLoader
 {
-	public static EmptyModelLoader INSTANCE = new EmptyModelLoader();
+	private static EmptyModelLoader INSTANCE = new EmptyModelLoader();
 	private Map<ResourceLocation, DummyModel> locations = Maps.newHashMap();
 
-	public EmptyModelLoader()
+	private EmptyModelLoader()
 	{
 		ModelLoaderRegistry.registerLoader(this);
 	}
