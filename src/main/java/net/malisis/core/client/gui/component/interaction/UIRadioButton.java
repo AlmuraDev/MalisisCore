@@ -24,10 +24,12 @@
 
 package net.malisis.core.client.gui.component.interaction;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import net.malisis.core.client.gui.MalisisGui;
 import net.malisis.core.client.gui.component.UIComponent;
 import net.malisis.core.client.gui.component.content.IContent;
 import net.malisis.core.client.gui.component.content.IContentHolder;
@@ -45,8 +47,11 @@ import net.malisis.core.renderer.font.FontOptions;
  */
 public class UIRadioButton extends UIComponent implements IContentHolder
 {
-	//TODO:needs to cleared at some point
-	private final static HashMap<String, List<UIRadioButton>> radioButtons = new HashMap<>();
+	/**
+	 * Radio button groups by name. Weak, since the buttons reference their GUI and strong values would keep every closed GUI alive.
+	 * Buttons only get their GUI once added to it, so groups are split per GUI when looking up the selected button.
+	 */
+	private final static HashMap<String, List<WeakReference<UIRadioButton>>> radioButtons = new HashMap<>();
 
 	protected final FontOptions fontOptions = FontOptions	.builder()
 															.color(0x444444)
@@ -149,7 +154,7 @@ public class UIRadioButton extends UIComponent implements IContentHolder
 	 */
 	public UIRadioButton setSelected()
 	{
-		UIRadioButton rb = getSelected(name);
+		UIRadioButton rb = getSelected(this);
 		if (rb != null)
 			rb.selected = false;
 		selected = true;
@@ -167,27 +172,46 @@ public class UIRadioButton extends UIComponent implements IContentHolder
 
 	public static void addRadioButton(UIRadioButton rb)
 	{
-		List<UIRadioButton> listRb = radioButtons.get(rb.name);
+		List<WeakReference<UIRadioButton>> listRb = radioButtons.computeIfAbsent(rb.name, name -> new ArrayList<>());
+		listRb.removeIf(ref -> ref.get() == null);
+		listRb.add(new WeakReference<>(rb));
+	}
+
+	/**
+	 * Gets the selected {@link UIRadioButton} of the group <b>name</b> in <b>gui</b>. A null gui matches any gui.
+	 *
+	 * @param gui the gui
+	 * @param name the group name
+	 * @return the selected radio button, or null
+	 */
+	public static UIRadioButton getSelected(MalisisGui gui, String name)
+	{
+		List<WeakReference<UIRadioButton>> listRb = radioButtons.get(name);
 		if (listRb == null)
-			listRb = new ArrayList<>();
-		listRb.add(rb);
-		radioButtons.put(rb.name, listRb);
+			return null;
+		for (WeakReference<UIRadioButton> ref : listRb)
+		{
+			UIRadioButton rb = ref.get();
+			if (rb != null && rb.selected && (gui == null || rb.getGui() == gui))
+				return rb;
+		}
+		return null;
 	}
 
 	public static UIRadioButton getSelected(String name)
 	{
-		List<UIRadioButton> listRb = radioButtons.get(name);
-		if (listRb == null)
-			return null;
-		for (UIRadioButton rb : listRb)
-			if (rb.selected)
-				return rb;
-		return null;
+		return getSelected(null, name);
 	}
 
+	/**
+	 * Gets the selected {@link UIRadioButton} in the same group and gui as <b>rb</b>.
+	 *
+	 * @param rb the radio button
+	 * @return the selected radio button, or null
+	 */
 	public static UIRadioButton getSelected(UIRadioButton rb)
 	{
-		return getSelected(rb.name);
+		return getSelected(rb.getGui(), rb.name);
 	}
 
 	/**

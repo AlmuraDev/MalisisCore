@@ -26,6 +26,7 @@ package net.malisis.core.client.gui.component.scrolling;
 
 import static com.google.common.base.Preconditions.*;
 
+import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.function.IntSupplier;
@@ -63,8 +64,12 @@ public abstract class UIScrollBar extends UIComponent implements IControlCompone
 		VERTICAL
 	}
 
-	private static final Map<IScrollable, UIScrollBar> verticalScrollbars = new WeakHashMap<>();
-	private static final Map<IScrollable, UIScrollBar> horizontalScrollbars = new WeakHashMap<>();
+	/**
+	 * The scrollbars of each component. The values are weak too: a scrollbar references its parent (the key), so a strong value would
+	 * keep the key, and with it the whole closed GUI, alive forever. The parent holds its scrollbars strongly as control components.
+	 */
+	private static final Map<IScrollable, WeakReference<UIScrollBar>> verticalScrollbars = new WeakHashMap<>();
+	private static final Map<IScrollable, WeakReference<UIScrollBar>> horizontalScrollbars = new WeakHashMap<>();
 
 	protected IPosition scrollPosition = new ScrollPosition();
 	protected ISize scrollSize = Size.of(5, 5);
@@ -83,8 +88,7 @@ public abstract class UIScrollBar extends UIComponent implements IControlCompone
 		parent.addControlComponent(this);
 		parent.register(this);
 
-		if (type == Type.VERTICAL)
-			verticalScrollbars.put(parent, this);
+		(type == Type.VERTICAL ? verticalScrollbars : horizontalScrollbars).put(parent, new WeakReference<>(this));
 
 		setPosition(new ScrollbarPosition());
 		setSize(new ScrollbarSize());
@@ -349,23 +353,25 @@ public abstract class UIScrollBar extends UIComponent implements IControlCompone
 
 	public static UIScrollBar verticalScrollbar(Object component)
 	{
-		return verticalScrollbars.get(component);
+		WeakReference<UIScrollBar> ref = verticalScrollbars.get(component);
+		return ref != null ? ref.get() : null;
 	}
 
 	public static UIScrollBar horizontalScrollbar(Object component)
 	{
-		return horizontalScrollbars.get(component);
+		WeakReference<UIScrollBar> ref = horizontalScrollbars.get(component);
+		return ref != null ? ref.get() : null;
 	}
 
 	public static int scrollbarWidth(Object component)
 	{
-		UIScrollBar scrollbar = verticalScrollbars.get(component);
+		UIScrollBar scrollbar = verticalScrollbar(component);
 		return scrollbar != null && scrollbar.isVisible() ? scrollbar.size().width() : 0;
 	}
 
 	public static int scrollbarHeight(Object component)
 	{
-		UIScrollBar scrollbar = horizontalScrollbars.get(component);
+		UIScrollBar scrollbar = horizontalScrollbar(component);
 		return scrollbar != null && scrollbar.isVisible() ? scrollbar.size().height() : 0;
 	}
 
