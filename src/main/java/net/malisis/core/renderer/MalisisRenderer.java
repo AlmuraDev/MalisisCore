@@ -35,6 +35,7 @@ import com.google.common.collect.Sets;
 
 import net.malisis.core.MalisisCore;
 import net.malisis.core.asm.AsmUtils;
+import net.malisis.core.asm.mixin.core.client.MixinBufferBuilder;
 import net.malisis.core.block.BoundingBoxType;
 import net.malisis.core.block.IBoundingBox;
 import net.malisis.core.block.IComponent;
@@ -52,7 +53,6 @@ import net.malisis.core.renderer.icon.provider.IIconProvider;
 import net.malisis.core.renderer.icon.provider.IItemIconProvider;
 import net.malisis.core.renderer.model.MalisisModel;
 import net.malisis.core.util.AABBUtils;
-import net.malisis.core.util.BlockPosUtils;
 import net.malisis.core.util.EnumFacingUtils;
 import net.malisis.core.util.ItemUtils;
 import net.malisis.core.util.Silenced;
@@ -368,9 +368,15 @@ public class MalisisRenderer<T extends TileEntity> extends TileEntitySpecialRend
 		this.buffer = wr;
 		set(world, state.getBlock(), pos, state);
 		prepare(RenderType.BLOCK);
-		if (checkBlock())
-			render();
-		clean();
+		try
+		{
+			if (checkBlock())
+				render();
+		}
+		finally
+		{
+			clean();
+		}
 
 		return vertexDrawn;
 	}
@@ -393,10 +399,16 @@ public class MalisisRenderer<T extends TileEntity> extends TileEntitySpecialRend
 		this.buffer = Tessellator.getInstance().getBuffer();
 		set(itemStack);
 		prepare(RenderType.ITEM);
-
-		if (checkBlock())
-			render();
-		clean();
+		try
+		{
+			if (checkBlock())
+				render();
+		}
+		finally
+		{
+			//always finish drawing, so an exception doesn't leave the Tessellator building ("Already building!" every frame after)
+			clean();
+		}
 		return true;
 	}
 
@@ -439,8 +451,16 @@ public class MalisisRenderer<T extends TileEntity> extends TileEntitySpecialRend
 		this.buffer = isBatched() ? batchedBuffer : Tessellator.getInstance().getBuffer();
 		set(te, partialTick);
 		prepare(RenderType.TILE_ENTITY, x, y, z);
-		if (checkBlock())
-			render();
+		try
+		{
+			if (checkBlock())
+				render();
+		}
+		finally
+		{
+			//always finish drawing and pop the matrix, so an exception doesn't leave the Tessellator building or the matrix pushed
+			clean();
+		}
 		//TODO
 		//		if (getBlockDamage)
 		//		{
@@ -460,7 +480,6 @@ public class MalisisRenderer<T extends TileEntity> extends TileEntitySpecialRend
 		//				GL11.glDisable(GL11.GL_BLEND);
 		//			}
 		//		}
-		clean();
 	}
 
 	// #end TESR
@@ -495,10 +514,14 @@ public class MalisisRenderer<T extends TileEntity> extends TileEntitySpecialRend
 		}
 
 		prepare(RenderType.WORLD_LAST, x, y, z);
-
-		render();
-
-		clean();
+		try
+		{
+			render();
+		}
+		finally
+		{
+			clean();
+		}
 	}
 
 	// #end IRenderWorldLast
@@ -520,9 +543,14 @@ public class MalisisRenderer<T extends TileEntity> extends TileEntitySpecialRend
 		if (renderType == RenderType.BLOCK)
 		{
 			vertexFormat = DefaultVertexFormats.BLOCK;
-			//when drawing a block, the position to draw is relative to current chunk
-			BlockPos chunkPos = BlockPosUtils.chunkPosition(pos);
-			posOffset = new Vec3d(chunkPos.getX(), chunkPos.getY(), chunkPos.getZ());
+			//when drawing a block, the vertexes are written with addVertexData(), which doesn't apply the buffer translation: apply it here,
+			//like vanilla's putPosition() does. Vanilla translates chunk buffers to the chunk section's corner (pos - corner is the same as
+			//BlockPosUtils.chunkPosition), but OptiFine's render regions translate them to the region's corner (blocks drawn elsewhere and
+			//invisible in place when this assumed the chunk corner)
+			MixinBufferBuilder translation = (MixinBufferBuilder) buffer;
+			posOffset = new Vec3d(	pos.getX() + translation.getXOffset(),
+									pos.getY() + translation.getYOffset(),
+									pos.getZ() + translation.getZOffset());
 		}
 		else if (renderType == RenderType.ITEM)
 		{
@@ -742,6 +770,8 @@ public class MalisisRenderer<T extends TileEntity> extends TileEntitySpecialRend
 		GlStateManager.disableColorMaterial();
 		GlStateManager.shadeModel(GL11.GL_FLAT);
 		GlStateManager.disableBlend();
+		//enableBlending() lowered the alpha test to 0: back to vanilla's 0.1 so later rendering keeps cutting out transparent pixels
+		GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
 	}
 
 	/**
