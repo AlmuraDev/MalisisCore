@@ -59,10 +59,10 @@ public class ClipArea
 		if (!container.shouldClipContent()) {
 			this.noClip = true;
 		} else {
-			this.x = container.screenX() + right;
-			this.y = container.screenY() + bottom;
-			this.X = container.screenX() + container.getWidth() - left;
-			this.Y = container.screenY() + container.getHeight() - top;
+			this.x = container.screenX() + left;
+			this.y = container.screenY() + top;
+			this.X = container.screenX() + container.getWidth() - right;
+			this.Y = container.screenY() + container.getHeight() - bottom;
 		}
 
 		if (intersect && container.getParent() instanceof IClipable) {
