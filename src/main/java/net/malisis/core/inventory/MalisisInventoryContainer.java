@@ -49,6 +49,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 
 /**
  * Complete rewrite of {@link Container}.
@@ -143,7 +144,8 @@ public class MalisisInventoryContainer extends Container
 			p.closeContainer();
 			p.getNextWindowId();
 			this.windowId = p.currentWindowId;
-			playerInventoryCache = new InventoryCache(player, playerInventory, windowId);
+			//this.windowId: the parameter is the client's (0), and the client ignores slot updates for another window
+			playerInventoryCache = new InventoryCache(player, playerInventory, this.windowId);
 		}
 
 		this.owner.openContainer = this;
@@ -547,12 +549,12 @@ public class MalisisInventoryContainer extends Container
 				//couldn't fit all into the slot, put back what's left in hotbar
 				if (!dest.isEmpty())
 				{
-					hotbarSlot.insert(dest);
+					dropLeftover(hotbarSlot.insert(dest));
 					//src should be empty but better safe than sorry
-					inventory.transferInto(src);
+					dropLeftover(inventory.transferInto(src));
 				}
 				else
-					src = hotbarSlot.insert(src);
+					dropLeftover(hotbarSlot.insert(src));
 			}
 		}
 		// merge itemStack in slot into hotbar. If already holding an itemStack, move elsewhere inside player inventory
@@ -562,11 +564,26 @@ public class MalisisInventoryContainer extends Container
 			{
 				ItemStack dest = hoveredSlot.extract(ItemUtils.FULL_STACK);
 				ItemStack left = hotbarSlot.insert(dest, ItemUtils.FULL_STACK, true);
-				getPlayerInventory().transferInto(left, false);
+				left = getPlayerInventory().transferInto(left, false);
+				//player inventory full: put it back where the hovered stack was (now empty), and drop anything still left
+				if (!left.isEmpty())
+					left = hoveredSlot.insert(left);
+				dropLeftover(left);
 			}
 		}
 
 		return hotbarSlot.getItemStack();
+	}
+
+	/**
+	 * Drops what couldn't be put anywhere, rather than losing it.
+	 *
+	 * @param itemStack the item stack left over
+	 */
+	private void dropLeftover(ItemStack itemStack)
+	{
+		if (itemStack != null && !itemStack.isEmpty())
+			owner.dropItem(itemStack, false);
 	}
 
 	/**
@@ -627,20 +644,15 @@ public class MalisisInventoryContainer extends Container
 		else if (!lastShiftClicked.isEmpty())
 		{
 			//transfer all matching itemStack into other inventories
-			if (inventory == getPlayerInventory())
-			{
-
-			}
-
 			for (MalisisSlot s : inventory.getNonEmptySlots())
 			{
 				ItemStack itemStack = s.getItemStack();
 				if (s.isState(PLAYER_EXTRACT) && ItemUtils.areItemStacksStackable(itemStack, lastShiftClicked))
 				{
 					itemStack = transferSlotOutOfInventory(inventory, s);
-					//replace what's left of the item back into the slot
-					slot.setItemStack(itemStack);
-					slot.onSlotChanged();
+					//replace what's left of the item back into the slot it came from
+					s.setItemStack(itemStack);
+					s.onSlotChanged();
 					//itemStack is not empty, inventory is full, no need to keep looping the slots
 					if (!itemStack.isEmpty())
 						return itemStack;
@@ -829,14 +841,25 @@ public class MalisisInventoryContainer extends Container
 	 */
 
 	/**
-	 * Can interact with.
+	 * Whether the player can still use this container: every block inventory's tile entity must still be in the world, within 8 blocks
+	 * (like vanilla chests). Checked by vanilla every tick on the server, which closes the container when this is false.
 	 *
-	 * @param var1 the var1
+	 * @param player the player
 	 * @return true, if successful
 	 */
 	@Override
-	public boolean canInteractWith(EntityPlayer var1)
+	public boolean canInteractWith(EntityPlayer player)
 	{
+		for (MalisisInventory inventory : getInventories())
+		{
+			if (!(inventory.getProvider() instanceof TileEntity))
+				continue;
+			TileEntity te = (TileEntity) inventory.getProvider();
+			if (te.isInvalid() || te.getWorld() != player.world || te.getWorld().getTileEntity(te.getPos()) != te)
+				return false;
+			if (player.getDistanceSq(te.getPos().getX() + 0.5D, te.getPos().getY() + 0.5D, te.getPos().getZ() + 0.5D) > 64.0D)
+				return false;
+		}
 		return true;
 	}
 

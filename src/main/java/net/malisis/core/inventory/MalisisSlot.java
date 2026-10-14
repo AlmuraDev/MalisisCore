@@ -391,15 +391,16 @@ public class MalisisSlot
 			if (!force)
 				return insert;
 
+			//swap the whole stacks, like vanilla: only when all of insert fits in the emptied slot, otherwise the part that didn't fit
+			//would be lost (the caller replaces insert with what's returned)
 			ItemStack slotStack = extract(ItemUtils.FULL_STACK);
-			ItemStack insertStack = insert.copy();
-			if (insert(insertStack, amount, false).isEmpty())
-			{
-				setItemStack(insert);
+			if (insert(insert.copy(), insert.getCount(), false).isEmpty())
 				return slotStack;
-			}
-			else
-				return slotStack;
+
+			//doesn't fit: put the slot back as it was and leave insert untouched
+			setItemStack(slotStack);
+			onSlotChanged();
+			return insert;
 		}
 
 		ism.merge(amount, getSlotStackLimit());
