@@ -129,7 +129,9 @@ public abstract class WeakNested<K, V>
 
 		public void addAll(K key, U values)
 		{
-			getOrCreate(key, values);
+			//merge: getOrCreate(key, values) dropped all the values when the key already had a collection (and stored the caller's own
+			//collection otherwise)
+			getOrCreate(key, empty()).addAll(values);
 		}
 
 		public void remove(K key, V value)
