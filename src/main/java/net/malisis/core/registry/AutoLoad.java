@@ -39,5 +39,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AutoLoad
 {
-	boolean value() default true;
+	boolean value() default false;
 }

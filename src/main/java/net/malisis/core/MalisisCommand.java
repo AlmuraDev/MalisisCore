@@ -39,7 +39,6 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
 
@@ -58,16 +57,13 @@ public class MalisisCommand extends CommandBase
 	private static Map<String, Runnable> debugs = Maps.newHashMap();
 
 	/**
-	 * Instantiates the command
+	 * Instantiates the command (registered once, on the client, by {@link MalisisCore#init})
 	 */
 	public MalisisCommand()
 	{
-		if (FMLCommonHandler.instance().getSide().isClient()) {
-			ClientCommandHandler.instance.registerCommand(this);
-			parameters.add("config");
-			parameters.add("version");
-			parameters.add("debug");
-		}
+		parameters.add("config");
+		parameters.add("version");
+		parameters.add("debug");
 	}
 
 	public static void registerDebug(String name, Runnable command)
