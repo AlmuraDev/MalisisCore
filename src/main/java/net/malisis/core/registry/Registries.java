@@ -24,6 +24,7 @@
 
 package net.malisis.core.registry;
 
+import java.util.Arrays;
 import java.util.stream.StreamSupport;
 
 import net.malisis.core.MalisisCore;
@@ -151,6 +152,22 @@ public class Registries
 	public static void processPostSetBlock(Chunk chunk, BlockPos pos, IBlockState oldState, IBlockState newState)
 	{
 		postSetBlockRegistry.processCallbacks(chunk, pos, oldState, newState);
+	}
+
+	/** Whether Sponge added bridge$setBlockState() to Chunk (null until checked). */
+	private static Boolean spongeChunkBridge;
+
+	/**
+	 * Whether {@link Chunk} has Sponge's bridge$setBlockState(), which then does the actual block setting (the set block callbacks are
+	 * processed from it instead of from {@link Chunk#setBlockState(BlockPos, IBlockState)}, which only forwards to it).
+	 *
+	 * @return true, if Sponge is installed
+	 */
+	public static boolean hasSpongeChunkBridge()
+	{
+		if (spongeChunkBridge == null)
+			spongeChunkBridge = Arrays.stream(Chunk.class.getMethods()).anyMatch(m -> m.getName().equals("bridge$setBlockState"));
+		return spongeChunkBridge;
 	}
 
 	/**
