@@ -24,6 +24,7 @@
 
 package net.malisis.core.inventory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -590,8 +591,9 @@ public class MalisisInventory
 	{
 		for (ItemStack itemStack : getItemStackList())
 			EntityUtils.spawnEjectedItem(world, pos, itemStack);
-		closeContainers();
+		//empty first: the items are already dropped, so nothing must be taken out while the containers close
 		emptyInventory();
+		closeContainers();
 	}
 
 	/**
@@ -608,7 +610,8 @@ public class MalisisInventory
 	 */
 	public void closeContainers()
 	{
-		for (MalisisInventoryContainer container : containers)
+		//closing removes the container from the set (removeOpenedContainer): iterate over a copy
+		for (MalisisInventoryContainer container : new ArrayList<>(containers))
 			container.close();
 	}
 
