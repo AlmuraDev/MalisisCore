@@ -71,7 +71,17 @@ public class DirectMessage implements IMalisisMessageHandler<DirectMessage.Packe
 	@Override
 	public void process(Packet message, MessageContext ctx)
 	{
-		runnables.get(message.id).run();
+		//the id comes from the client: ignore unknown ones, and only let operators trigger the actions (debug output on the console)
+		Runnable runnable = runnables.get(message.id);
+		if (runnable == null)
+			return;
+		EntityPlayerMP player = ctx.getServerHandler().player;
+		if (!player.canUseCommand(2, ""))
+		{
+			MalisisCore.log.warn("Ignored direct message {} from {}, who isn't an operator", message.id, player.getName());
+			return;
+		}
+		runnable.run();
 	}
 
 	/**

@@ -24,6 +24,8 @@
 
 package net.malisis.core.util;
 
+import java.lang.ref.WeakReference;
+
 import net.malisis.core.client.gui.MalisisGui;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.tileentity.TileEntity;
@@ -39,13 +41,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  */
 public class TileEntityUtils
 {
-	/** Reference to the {@link TileEntity} currently being use for current opened {@link MalisisGui}. */
-	@SideOnly(Side.CLIENT)
-	private static TileEntity currentTileEntity;
+	/** Reference to the {@link TileEntity} currently being use for current opened {@link MalisisGui}. Weak (as is the gui): nothing clears
+	 * them, and they'd otherwise keep the last gui, tile entity and client world alive after leaving the world.<br>
+	 * Not {@code @SideOnly}: Forge strips such fields on the server but keeps the static initializer that sets them, which would then fail
+	 * with NoSuchFieldError on the first use of this class. A {@link WeakReference} is safe on the server. */
+	private static WeakReference<TileEntity> currentTileEntity = new WeakReference<>(null);
 
 	/** Reference the to currently opened {@link MalisisGui}. */
-	@SideOnly(Side.CLIENT)
-	private static MalisisGui currenGui;
+	private static WeakReference<MalisisGui> currenGui = new WeakReference<>(null);
 
 	/**
 	 * Gets the {@link TileEntity} of type <b>T</b> at the specified {@link BlockPos}.<br>
@@ -77,9 +80,9 @@ public class TileEntityUtils
 	@SideOnly(Side.CLIENT)
 	public static void linkTileEntityToGui(TileEntity te, MalisisGui gui)
 	{
-		currentTileEntity = te;
-		currenGui = gui;
-		currenGui.updateGui();
+		currentTileEntity = new WeakReference<>(te);
+		currenGui = new WeakReference<>(gui);
+		gui.updateGui();
 	}
 
 	/**
@@ -90,9 +93,10 @@ public class TileEntityUtils
 	@SideOnly(Side.CLIENT)
 	public static void updateGui(TileEntity te)
 	{
-		if (te != currentTileEntity)
+		MalisisGui gui = currenGui.get();
+		if (te != currentTileEntity.get() || gui == null)
 			return;
-		currenGui.updateGui();
+		gui.updateGui();
 	}
 
 	public static void notifyUpdate(TileEntity te)

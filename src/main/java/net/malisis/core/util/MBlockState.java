@@ -49,9 +49,6 @@ import net.minecraftforge.common.util.Constants.NBT;
  */
 public class MBlockState
 {
-	private static BlockStateFunction toBlockState = new BlockStateFunction();
-	private static BlockPredicate blockFilter = new BlockPredicate();
-
 	protected BlockPos pos;
 	protected Block block;
 	protected IBlockState state;
@@ -179,9 +176,10 @@ public class MBlockState
 
 	public static Iterable<MBlockState> getAllInBox(IBlockAccess world, BlockPos from, BlockPos to, Block block, boolean skipAir)
 	{
-		FluentIterable<MBlockState> it = FluentIterable.from(BlockPos.getAllInBox(from, to)).transform(toBlockState.set(world));
+		//new function and predicate per call: shared static ones, applied lazily, got the world or filter of a later call
+		FluentIterable<MBlockState> it = FluentIterable.from(BlockPos.getAllInBox(from, to)).transform(new BlockStateFunction().set(world));
 		if (block != null || skipAir)
-			it.filter(blockFilter.set(block, skipAir));
+			it = it.filter(new BlockPredicate().set(block, skipAir)); //filter() returns a new iterable, it doesn't change this one
 
 		return it;
 	}

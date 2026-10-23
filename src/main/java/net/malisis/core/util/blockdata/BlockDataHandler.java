@@ -26,8 +26,10 @@ package net.malisis.core.util.blockdata;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Function;
 import com.google.common.collect.HashBasedTable;
@@ -42,6 +44,7 @@ import net.malisis.core.util.Silenced;
 import net.malisis.core.util.Utils;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
@@ -50,6 +53,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkDataEvent;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.event.world.ChunkWatchEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -86,6 +90,8 @@ public class BlockDataHandler
 
 	private Map<String, HandlerInfo<?>> handlerInfos = new HashMap<>();
 	private static final ThreadLocal<Table<String, Chunk, ChunkData<?>>> datas = ThreadLocal.withInitial(HashBasedTable::create);
+	/** Client only: data received for chunks the client hadn't loaded yet, applied when they load (see {@link #setBlockData}). */
+	private static final Map<Long, Map<String, ChunkData<?>>> pendingClientData = new HashMap<>();
 
 	private BlockDataHandler()
 	{
@@ -110,9 +116,10 @@ public class BlockDataHandler
 		else if (world instanceof ChunkCache)
 			return ((ChunkCache) world).world;
 
-		if (!FMLClientHandler.instance().hasOptifine())
+		//OptiFine's chunk cache is client only, and on a dedicated server just loading FMLClientHandler fails (it refers to IntegratedServer)
+		if (world == null || !MalisisCore.isClient() || !FMLClientHandler.instance().hasOptifine())
 			return null;
-		if (chunkCacheClass == null || chunkCacheField != null)
+		if (chunkCacheClass == null || chunkCacheField == null) //was != null, so OptiFine's chunk cache never resolved and render-time lookups came back empty
 			return null;
 		if (!chunkCacheClass.isAssignableFrom(world.getClass()))
 			return null;
@@ -246,6 +253,44 @@ public class BlockDataHandler
 	}
 
 	/**
+	 * Client only.<br>
+	 * Applies the data received before the {@link Chunk} was loaded.
+	 *
+	 * @param event the event
+	 */
+	@SubscribeEvent
+	public void onChunkLoad(ChunkEvent.Load event)
+	{
+		if (!event.getWorld().isRemote || pendingClientData.isEmpty())
+			return;
+
+		Chunk chunk = event.getChunk();
+		Map<String, ChunkData<?>> pending = pendingClientData.remove(ChunkPos.asLong(chunk.x, chunk.z));
+		if (pending != null)
+			pending.forEach((identifier, chunkData) -> datas.get().put(identifier, chunk, chunkData));
+	}
+
+	/**
+	 * Releases the data of every {@link Chunk} of the unloading {@link World}.<br>
+	 * Chunk unload and save events don't cover everything: the client gets no chunk unload when it disconnects or changes dimension, and
+	 * the server's world unload (and Sponge's own chunk unloads) can skip the save that releases the data, leaving the chunks, and the
+	 * world, referenced. Posted on the world's own thread, which owns its data.
+	 *
+	 * @param event the event
+	 */
+	@SubscribeEvent
+	public void onWorldUnload(WorldEvent.Unload event)
+	{
+		World world = event.getWorld();
+		Table<String, Chunk, ChunkData<?>> data = datas.get();
+		List<Chunk> chunks = data.columnKeySet().stream().filter(chunk -> chunk.getWorld() == world).collect(Collectors.toList());
+		chunks.forEach(chunk -> data.column(chunk).clear());
+
+		if (world.isRemote)
+			pendingClientData.clear();
+	}
+
+	/**
 	 * Server only.<br>
 	 * Sends the chunks coordinates to the client when they get watched by them.
 	 *
@@ -364,6 +409,29 @@ public class BlockDataHandler
 	}
 
 	/**
+	 * Server only.<br>
+	 * Sends the custom data for the specified identifier of the {@link Chunk} containing the {@link BlockPos} to the clients watching it.
+	 * Lets callers changing many positions send each chunk once, rather than once per position with
+	 * {@link #setData(String, IBlockAccess, BlockPos, Object, boolean)}.
+	 *
+	 * @param identifier the identifier
+	 * @param world the world
+	 * @param pos the pos
+	 */
+	public static void sendData(String identifier, World world, BlockPos pos)
+	{
+		if (world.isRemote)
+			return;
+
+		ChunkData<?> chunkData = instance.chunkData(identifier, world, pos);
+		if (chunkData == null)
+			return;
+
+		ByteBuf buf = chunkData.toBytes(Unpooled.buffer());
+		Utils.getLoadedChunk(world, pos).ifPresent(chunk -> BlockDataMessage.sendBlockData(chunk, identifier, buf));
+	}
+
+	/**
 	 * Called on the client when receiving the data from the server, either because client started to watch the chunk or server manually
 	 * sent the data.
 	 *
@@ -379,8 +447,14 @@ public class BlockDataHandler
 			return;
 
 		//MalisisCore.message("Received blockData (" + chunkX + "/" + chunkZ + ") for " + identifier);
-		Chunk chunk = Utils.getClientWorld().getChunk(chunkX, chunkZ);
 		ChunkData<?> chunkData = new ChunkData<>(handlerInfo).fromBytes(data);
+		//getChunk() would hand back the shared empty chunk for a chunk the client hasn't loaded yet, and the data would be lost on it
+		Chunk chunk = Utils.getClientWorld().getChunkProvider().getLoadedChunk(chunkX, chunkZ);
+		if (chunk == null || chunk.isEmpty())
+		{
+			pendingClientData.computeIfAbsent(ChunkPos.asLong(chunkX, chunkZ), k -> new HashMap<>()).put(handlerInfo.identifier, chunkData);
+			return;
+		}
 		datas.get().put(handlerInfo.identifier, chunk, chunkData);
 	}
 
