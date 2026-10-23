@@ -24,9 +24,13 @@
 
 package net.malisis.core.util.multiblock;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.Iterators;
 
@@ -42,6 +46,7 @@ import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
@@ -133,16 +138,20 @@ public abstract class MultiBlock implements Iterable<MBlockState>
 
 	public void placeBlocks(World world, BlockPos origin, IBlockState originState, boolean placeOrigin)
 	{
+		List<BlockPos> changed = new ArrayList<>();
 		for (MBlockState mstate : worldStates(world, origin))
 		{
 			if (!mstate.getPos().equals(origin) || placeOrigin)
 			{
 				BlockDataHandler.setData(ORIGIN_BLOCK_DATA, world, mstate.getPos(), origin);
+				changed.add(mstate.getPos());
 				mstate.placeBlock(world, 2);
 			}
 		}
 
 		BlockDataHandler.setData(ORIGIN_BLOCK_DATA, world, origin, origin);
+		changed.add(origin);
+		sendOriginData(world, changed);
 	}
 
 	public void breakBlocks(World world, BlockPos pos, IBlockState state)
@@ -152,21 +161,52 @@ public abstract class MultiBlock implements Iterable<MBlockState>
 			return;
 
 		IBlockState originState = world.getBlockState(origin);
+		List<BlockPos> changed = new ArrayList<>();
 		BlockDataHandler.removeData(ORIGIN_BLOCK_DATA, world, origin);
+		changed.add(origin);
 		for (MBlockState mstate : worldStates(origin, originState))
 		{
 			//remove data first so breaking this block doesn't re-trigger this loop
 			BlockDataHandler.removeData(ORIGIN_BLOCK_DATA, world, mstate.getPos());
+			changed.add(mstate.getPos());
 			mstate.breakBlock(world, 2);
 		}
+		sendOriginData(world, changed);
 	}
 
 	public void setOriginData(World world, BlockPos pos, IBlockState state)
 	{
+		List<BlockPos> changed = new ArrayList<>();
 		for (MBlockState mstate : this)
+		{
 			BlockDataHandler.setData(ORIGIN_BLOCK_DATA, world, mstate.getPos(), pos);
+			changed.add(mstate.getPos());
+		}
 
 		BlockDataHandler.setData(ORIGIN_BLOCK_DATA, world, pos, pos);
+		changed.add(pos);
+		sendOriginData(world, changed);
+	}
+
+	/**
+	 * Server only.<br>
+	 * Sends the origin data of the chunks containing the positions to the clients watching them, once per chunk. Without it, players
+	 * other than the one placing got no origin data until they watched the chunk again, and kept it after the multiblock was broken.
+	 *
+	 * @param world the world
+	 * @param positions the positions changed
+	 */
+	private void sendOriginData(World world, List<BlockPos> positions)
+	{
+		if (world.isRemote)
+			return;
+
+		Set<Long> sent = new HashSet<>();
+		for (BlockPos pos : positions)
+		{
+			if (sent.add(ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4)))
+				BlockDataHandler.sendData(ORIGIN_BLOCK_DATA, world, pos);
+		}
 	}
 
 	public boolean isComplete(World world, BlockPos pos)

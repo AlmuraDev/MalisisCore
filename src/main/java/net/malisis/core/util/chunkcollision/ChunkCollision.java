@@ -80,6 +80,8 @@ public class ChunkCollision
 	private ChunkCallbackRegistry<IChunkCallback<Void>, IChunkCallbackPredicate, Void> collisionRegistry = new ChunkCallbackRegistry<>();
 	private ChunkCallbackRegistry<IChunkCallback<RayTraceResult>, IChunkCallbackPredicate, RayTraceResult> rayTraceRegistry = new ChunkCallbackRegistry<>();
 	private ChunkCallbackRegistry<IChunkCallback<Boolean>, IChunkCallbackPredicate, Boolean> placeAtRegistry = new ChunkCallbackRegistry<>();
+	/** Source of the ray trace being processed, for the reducer. Per thread: the client and the integrated server both ray trace. */
+	private final ThreadLocal<Point> raySource = new ThreadLocal<>();
 
 	public ChunkCollision()
 	{
@@ -87,6 +89,7 @@ public class ChunkCollision
 		collisionRegistry.registerCallback(	this::collisionBoxesCallback,
 											CallbackOption.of((IChunkCallbackPredicate) this::isChunkCollidable));
 		rayTraceRegistry.registerCallback(this::rayTraceCallback, CallbackOption.of((IChunkCallbackPredicate) this::isChunkCollidable));
+		rayTraceRegistry.reduce((c1, c2) -> CallbackResult.of(Raytrace.getClosestHit(Type.BLOCK, raySource.get(), c1.getValue(), c2.getValue())));
 		placeAtRegistry.registerCallback(this::placeAtCallback, CallbackOption.of((IChunkCallbackPredicate) this::isChunkCollidable));
 	}
 
@@ -174,8 +177,17 @@ public class ChunkCollision
 
 	public RayTraceResult processCallbacks(Chunk chunk, Point src, Point dest)
 	{
-		rayTraceRegistry.reduce((c1, c2) -> CallbackResult.of(Raytrace.getClosestHit(Type.BLOCK, src, c1.getValue(), c2.getValue())));
-		return rayTraceRegistry.processCallbacks(chunk, src, dest).getValue();
+		//the reducer is shared: setting a new one capturing src on every call let the client and server threads swap each other's
+		Point previous = raySource.get(); //a callback can ray trace again
+		raySource.set(src);
+		try
+		{
+			return rayTraceRegistry.processCallbacks(chunk, src, dest).getValue();
+		}
+		finally
+		{
+			raySource.set(previous);
+		}
 	}
 
 	private CallbackResult<RayTraceResult> rayTraceCallback(Chunk chunk, BlockPos listener, Object... params)

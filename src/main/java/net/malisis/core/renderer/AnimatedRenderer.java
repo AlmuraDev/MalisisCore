@@ -26,8 +26,7 @@ package net.malisis.core.renderer;
 
 import java.util.Map;
 import java.util.Optional;
-
-import com.google.common.collect.Maps;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.malisis.core.block.IComponent;
 import net.malisis.core.registry.MalisisRegistry;
@@ -57,8 +56,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  */
 public class AnimatedRenderer extends MalisisRenderer<TileEntity>
 {
-	/** Map of {@link ISortedRenderable} per {@link BlockPos}. */
-	private static Map<BlockPos, IAnimatedRenderable> animatedRenderables = Maps.newHashMap();
+	/** Map of {@link ISortedRenderable} per {@link BlockPos}. Concurrent: {@link #registerRenderable} runs on the chunk render worker
+	 * threads while {@link #render} iterates it on the main thread. */
+	private static Map<BlockPos, IAnimatedRenderable> animatedRenderables = new ConcurrentHashMap<>();
 	static
 	{
 		//check renderable to be removed when a block changes.
@@ -128,12 +128,16 @@ public class AnimatedRenderer extends MalisisRenderer<TileEntity>
 	@SubscribeEvent
 	public void onChunkUnload(ChunkEvent.Unload event)
 	{
+		if (!event.getWorld().isRemote)
+			return; //also posted for the integrated server's chunks in SSP, on its own thread
 		animatedRenderables.keySet().removeIf(p -> (p.getX() >> 4) == event.getChunk().x && (p.getZ() >> 4) == event.getChunk().z);
 	}
 
 	@SubscribeEvent
 	public void onWorldUnload(WorldEvent.Unload event)
 	{
+		if (!event.getWorld().isRemote)
+			return; //also posted for the integrated server's worlds in SSP, on its own thread
 		animatedRenderables.clear();
 	}
 
@@ -181,8 +185,7 @@ public class AnimatedRenderer extends MalisisRenderer<TileEntity>
 	 */
 	public static void registerRenderable(IBlockAccess world, BlockPos pos, AnimatedModelComponent amc)
 	{
-		IAnimatedRenderable r = animatedRenderables.get(pos);
-		if (r == null)
-			animatedRenderables.put(pos, amc.createRenderable(world, pos));
+		if (!animatedRenderables.containsKey(pos))
+			animatedRenderables.putIfAbsent(pos, amc.createRenderable(world, pos));
 	}
 }
