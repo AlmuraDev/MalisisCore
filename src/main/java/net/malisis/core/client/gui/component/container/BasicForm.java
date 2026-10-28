@@ -101,7 +101,8 @@ public class BasicForm extends BasicContainer<BasicForm> {
     this.add(this.line);
 
     this.closeButton = new BasicSimpleButton();
-    this.closeButton.setFontOptions(FontColors.GRAY_FO.toBuilder().when(() -> this.closeButton.isHovered()).color(FontColors.WHITE).build());
+    this.closeButton.setFontOptions(FontColors.GRAY_FO);
+    this.closeButton.setHoveredFontOptions(FontColors.WHITE_FO);
     this.closeButton.setText("x");
     this.closeButton.setName("button.form.close");
     this.closeButton.setPosition(0, 0, Anchor.MIDDLE | Anchor.RIGHT);

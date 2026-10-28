@@ -28,8 +28,6 @@ import net.malisis.core.client.gui.MalisisGui;
 import net.malisis.core.client.gui.component.UIComponent;
 import net.malisis.core.client.gui.component.decoration.UIImage;
 import net.malisis.core.client.gui.component.interaction.UIButton;
-import net.malisis.core.client.gui.text.GuiText;
-import net.malisis.core.renderer.font.FontOptions;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -38,8 +36,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  */
 @SideOnly(Side.CLIENT)
 public class BasicSimpleButton extends UIButton {
-
-  private FontOptions textFontOptions = this.fontOptions;
 
   public BasicSimpleButton() {
     super();
@@ -78,26 +74,5 @@ public class BasicSimpleButton extends UIButton {
   @Deprecated
   public BasicSimpleButton(final MalisisGui gui, final UIImage image) {
     this(image);
-  }
-
-  @Override
-  public void setText(final String text) {
-    this.setContent(GuiText.of(text, this.textFontOptions));
-  }
-
-  /**
-   * Sets the {@link FontOptions} of the text, use {@link FontOptions.FontOptionsBuilder#when} for hovered or disabled variants.
-   *
-   * @param fontOptions the font options
-   */
-  public void setFontOptions(final FontOptions fontOptions) {
-    this.textFontOptions = fontOptions;
-    if (this.content instanceof GuiText) {
-      ((GuiText) this.content).setFontOptions(fontOptions);
-    }
-  }
-
-  public FontOptions getFontOptions() {
-    return this.textFontOptions;
   }
 }

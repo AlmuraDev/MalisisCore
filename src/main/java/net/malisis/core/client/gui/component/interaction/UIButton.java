@@ -24,6 +24,8 @@
 
 package net.malisis.core.client.gui.component.interaction;
 
+import static com.google.common.base.Preconditions.*;
+
 import java.util.function.Supplier;
 
 import org.lwjgl.input.Keyboard;
@@ -51,15 +53,14 @@ import net.minecraft.util.text.TextFormatting;
  */
 public class UIButton extends UIComponent implements IContentHolder
 {
-	/** The {@link FontOptions} to use by default for the {@link UIButton} content. */
-	protected final FontOptions fontOptions = FontOptions	.builder()
-															.color(0xFFFFFF)
-															.shadow()
-															.when(this::isHovered)
-															.color(0xFFFFA0)
-															.when(this::isDisabled)
-															.color(0xCCCCCC)
-															.build();
+	/** The {@link FontOptions} of the text content, when not hovered or disabled. */
+	protected FontOptions regularFontOptions = FontOptions.builder().color(0xFFFFFF).shadow().build();
+	/** The {@link FontOptions} of the text content while hovered. */
+	protected FontOptions hoveredFontOptions = FontOptions.builder().color(0xFFFFA0).shadow().build();
+	/** The {@link FontOptions} of the text content while disabled. */
+	protected FontOptions disabledFontOptions = FontOptions.builder().color(0xCCCCCC).shadow().build();
+	/** The {@link FontOptions} used for the {@link UIButton} text content, picking one of the above. */
+	protected FontOptions fontOptions = buildFontOptions();
 
 	protected IPosition offsetPosition = Position.of(() -> isPressed() ? 1 : 0, () -> isPressed() ? 1 : 0);
 	protected IPosition contentPosition = null;
@@ -170,6 +171,67 @@ public class UIButton extends UIComponent implements IContentHolder
 	public FontOptions defaultFontOptions()
 	{
 		return fontOptions;
+	}
+
+	/**
+	 * Sets the {@link FontOptions} of the text, when not hovered or disabled.
+	 *
+	 * @param fontOptions the font options
+	 */
+	public void setFontOptions(FontOptions fontOptions)
+	{
+		this.regularFontOptions = checkNotNull(fontOptions);
+		updateFontOptions();
+	}
+
+	/**
+	 * Sets the {@link FontOptions} of the text while this {@link UIButton} is hovered.
+	 *
+	 * @param fontOptions the font options
+	 */
+	public void setHoveredFontOptions(FontOptions fontOptions)
+	{
+		this.hoveredFontOptions = checkNotNull(fontOptions);
+		updateFontOptions();
+	}
+
+	/**
+	 * Sets the {@link FontOptions} of the text while this {@link UIButton} is disabled.
+	 *
+	 * @param fontOptions the font options
+	 */
+	public void setDisabledFontOptions(FontOptions fontOptions)
+	{
+		this.disabledFontOptions = checkNotNull(fontOptions);
+		updateFontOptions();
+	}
+
+	public FontOptions getFontOptions()
+	{
+		return regularFontOptions;
+	}
+
+	public FontOptions getHoveredFontOptions()
+	{
+		return hoveredFontOptions;
+	}
+
+	private FontOptions buildFontOptions()
+	{
+		//disabled first: a disabled button can still be hovered
+		return regularFontOptions	.toBuilder()
+									.when(this::isDisabled)
+									.from(disabledFontOptions)
+									.when(this::isHovered)
+									.from(hoveredFontOptions)
+									.build();
+	}
+
+	private void updateFontOptions()
+	{
+		fontOptions = buildFontOptions();
+		if (content instanceof GuiText)
+			((GuiText) content).setFontOptions(fontOptions);
 	}
 
 	//#end Getters/Setters

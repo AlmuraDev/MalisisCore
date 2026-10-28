@@ -374,6 +374,12 @@ public class FontOptions
 		public FontOptionsBuilder()
 		{}
 
+		public FontOptionsBuilder font(MalisisFont font)
+		{
+			this.font = font;
+			return this;
+		}
+
 		public FontOptionsBuilder scale(float scale)
 		{
 			this.fontScale = scale;
