@@ -109,10 +109,14 @@ public class FontOptions
 		this.rightAligned = rightAligned;
 	}
 
+	/**
+	 * Gets the font for this {@link FontOptions}: the Minecraft font when none is set or it isn't loaded.
+	 *
+	 * @return the font
+	 */
 	public MalisisFont getFont()
 	{
-		MalisisFont font = this.font.isLoaded() ? this.font : MalisisFont.minecraftFont;
-		return font;
+		return font != null && font.isLoaded() ? font : MalisisFont.minecraftFont;
 	}
 
 	/**
@@ -359,7 +363,9 @@ public class FontOptions
 		protected BooleanSupplier currentSupplier;
 		protected IPredicatedSupplier<FontOptions> supplier;
 
-		protected MalisisFont font = MalisisFont.minecraftFont;
+		//null for the Minecraft font (see getFont): building FontOptions must not create it, as mods build theirs in static fields while
+		//loading, before Minecraft's font renderer exists
+		protected MalisisFont font = null;
 		protected float fontScale = 1;
 		protected int color = 0x000000; //black
 		protected boolean shadow = false;
