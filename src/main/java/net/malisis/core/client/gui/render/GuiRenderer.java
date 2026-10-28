@@ -345,6 +345,19 @@ public class GuiRenderer
 	}
 
 	/**
+	 * Draws a text with the default font and options (black, no shadow, as in 6.5.x) at a position relative to {@link #currentComponent}.
+	 *
+	 * @param text the text
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 */
+	public void drawText(String text, int x, int y, int z)
+	{
+		drawText(null, text, x, y, z, FontOptions.builder().build());
+	}
+
+	/**
 	 * Draws a text in the GUI at a position relative to {@link #currentComponent}. The text is drawn as is (not translated, no
 	 * parameters).
 	 *

@@ -37,10 +37,8 @@ import net.malisis.core.renderer.animation.transformation.ITransformable;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
@@ -495,15 +493,6 @@ public class BasicContainer<T extends BasicContainer<T>> extends UIContainer imp
 
   public int getBorderAlpha() {
     return this.borderAlpha;
-  }
-
-  /**
-   * Gets an unmodifiable set of components
-   *
-   * @return The components
-   */
-  public Set<UIComponent> getComponents() {
-    return Collections.unmodifiableSet(this.content.components);
   }
 
   public void tabToLastControl() {

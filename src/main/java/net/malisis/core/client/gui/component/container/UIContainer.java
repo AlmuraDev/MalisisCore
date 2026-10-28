@@ -24,6 +24,7 @@
 
 package net.malisis.core.client.gui.component.container;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -303,6 +304,36 @@ public class UIContainer extends UIComponent implements IClipable, IScrollable, 
 			component.setParent(null);
 		content.components.clear();
 		onContentUpdate();
+	}
+
+	/**
+	 * Gets the components inside this {@link UIContainer} (not the control components).
+	 *
+	 * @return an unmodifiable view of the components
+	 */
+	public Set<UIComponent> getComponents()
+	{
+		return Collections.unmodifiableSet(content.components);
+	}
+
+	/**
+	 * Gets the width taken by the visible components, from the left edge of this {@link UIContainer} (padding included), as in 6.5.x.
+	 *
+	 * @return the content width
+	 */
+	public int getContentWidth()
+	{
+		return content.components.stream().filter(UIComponent::isVisible).mapToInt(c -> c.position().x() + c.size().width()).max().orElse(0);
+	}
+
+	/**
+	 * Gets the height taken by the visible components, from the top edge of this {@link UIContainer} (padding included), as in 6.5.x.
+	 *
+	 * @return the content height
+	 */
+	public int getContentHeight()
+	{
+		return content.components.stream().filter(UIComponent::isVisible).mapToInt(c -> c.position().y() + c.size().height()).max().orElse(0);
 	}
 
 	@Override

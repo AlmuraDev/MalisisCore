@@ -35,6 +35,7 @@ import net.malisis.core.client.gui.element.size.Size;
 import net.malisis.core.client.gui.element.size.Size.ISize;
 import net.malisis.core.client.gui.text.GuiText;
 import net.malisis.core.renderer.font.FontOptions;
+import net.malisis.core.renderer.font.MalisisFont;
 import net.minecraft.util.text.TextFormatting;
 
 /**
@@ -119,6 +120,46 @@ public class UILabel extends UIComponent implements IScrollable, IClipable
 	public void setFontOptions(FontOptions fontOptions)
 	{
 		text.setFontOptions(fontOptions);
+	}
+
+	public FontOptions getFontOptions()
+	{
+		return text.getFontOptions();
+	}
+
+	public MalisisFont getFont()
+	{
+		return getFontOptions().getFont();
+	}
+
+	/**
+	 * Gets the height of a line of text.
+	 *
+	 * @return the line height
+	 */
+	public int getLineHeight()
+	{
+		return (int) Math.ceil(getFont().getStringHeight(getFontOptions()));
+	}
+
+	/**
+	 * Gets the width of the text (the widest line when multiple lines).
+	 *
+	 * @return the content width
+	 */
+	public int getContentWidth()
+	{
+		return contentSize().width();
+	}
+
+	/**
+	 * Gets the height of the text.
+	 *
+	 * @return the content height
+	 */
+	public int getContentHeight()
+	{
+		return contentSize().height();
 	}
 
 	@Override
