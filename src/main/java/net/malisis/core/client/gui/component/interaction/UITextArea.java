@@ -71,6 +71,16 @@ public class UITextArea extends UITextField implements IScrollable
 	}
 
 	/**
+	 * Gets the vertical {@link UIScrollBar} of this {@link UITextArea}.
+	 *
+	 * @return the scrollbar
+	 */
+	public UIScrollBar getScrollbar()
+	{
+		return scrollbar;
+	}
+
+	/**
 	 * Called when a cursor is updated.<br>
 	 * Offsets the content to make sure the cursor is still visible.
 	 */
