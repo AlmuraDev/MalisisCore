@@ -31,6 +31,8 @@ import net.malisis.core.client.gui.component.UIComponent;
 import net.malisis.core.client.gui.component.decoration.BasicLine;
 import net.malisis.core.client.gui.component.interaction.UIButton;
 import net.malisis.core.client.gui.component.interaction.button.BasicSimpleButton;
+import net.malisis.core.client.gui.element.IClipable;
+import net.malisis.core.client.gui.element.IClipable.ClipArea;
 import net.malisis.core.client.gui.element.Padding;
 import net.malisis.core.renderer.font.FontOptions;
 import net.malisis.core.util.FontColors;
@@ -127,6 +129,17 @@ public class BasicForm extends BasicContainer<BasicForm> {
     }
 
     return this;
+  }
+
+  @Override
+  public ClipArea getClipArea() {
+    // The title bar and its line sit in the top padding, so clip to the whole form as 6.5.x did
+    if (!this.shouldClipContent()) {
+      return IClipable.NOCLIP;
+    }
+    final int x = this.screenPosition().x();
+    final int y = this.screenPosition().y();
+    return ClipArea.from(x, y, x + this.size().width(), y + this.size().height());
   }
 
   public boolean isMovable() {

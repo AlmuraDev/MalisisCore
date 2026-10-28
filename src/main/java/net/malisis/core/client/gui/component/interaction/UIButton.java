@@ -26,6 +26,7 @@ package net.malisis.core.client.gui.component.interaction;
 
 import static com.google.common.base.Preconditions.*;
 
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 import org.lwjgl.input.Keyboard;
@@ -36,7 +37,9 @@ import net.malisis.core.client.gui.component.content.IContent;
 import net.malisis.core.client.gui.component.content.IContentHolder;
 import net.malisis.core.client.gui.element.position.Position;
 import net.malisis.core.client.gui.element.position.Position.IPosition;
+import net.malisis.core.client.gui.element.size.RelativeSize;
 import net.malisis.core.client.gui.element.size.Size;
+import net.malisis.core.client.gui.element.size.Sizes;
 import net.malisis.core.client.gui.event.ComponentEvent;
 import net.malisis.core.client.gui.render.GuiIcon;
 import net.malisis.core.client.gui.render.shape.GuiShape;
@@ -160,6 +163,31 @@ public class UIButton extends UIComponent implements IContentHolder
 	{
 		setSize(Size.sizeOfContent(this, 6, 6));
 		return this;
+	}
+
+	/**
+	 * Sets the size the 6.5.x way: the button still grows to fit its content, so the size is a minimum.
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T extends UIComponent> T setSize(int width, int height)
+	{
+		IntSupplier contentWidth = Sizes.widthOfContent(this, 6);
+		IntSupplier contentHeight = Sizes.heightOfContent(this, 6);
+		setSize(new RelativeSize(this, width, height) {
+			@Override
+			public int width()
+			{
+				return Math.max(super.width(), contentWidth.getAsInt());
+			}
+
+			@Override
+			public int height()
+			{
+				return Math.max(super.height(), contentHeight.getAsInt());
+			}
+		});
+		return (T) this;
 	}
 
 	public UIButton onClick(Runnable action)

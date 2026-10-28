@@ -358,7 +358,7 @@ public class GuiRenderer
 	}
 
 	/**
-	 * Draws a text in the GUI at a position relative to {@link #currentComponent}. The text is drawn as is (not translated, no
+	 * Draws a text in the GUI at a position relative to {@link #currentComponent}. The text is not translated, but formatting codes apply (as in 6.5.x); no
 	 * parameters).
 	 *
 	 * @param font the font, null for the font of the options
@@ -382,7 +382,7 @@ public class GuiRenderer
 		if (font != null && font != fontOptions.getFont())
 			fontOptions = fontOptions.toBuilder().font(font).build();
 
-		GuiText.builder().text(text).translated(false).literal(true).fontOptions(fontOptions).position(x, y).zIndex(z).build().render(this);
+		GuiText.builder().text(text).translated(false).literal(false).fontOptions(fontOptions).position(x, y).zIndex(z).build().render(this);
 	}
 
 	/**

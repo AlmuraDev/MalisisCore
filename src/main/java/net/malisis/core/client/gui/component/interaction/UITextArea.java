@@ -36,6 +36,7 @@ import net.malisis.core.client.gui.event.component.SpaceChangeEvent.SizeChangeEv
 import net.malisis.core.client.gui.render.GuiRenderer;
 import net.malisis.core.client.gui.render.shape.GuiShape;
 import net.malisis.core.client.gui.render.shape.GuiShape.Builder;
+import net.malisis.core.renderer.font.FontOptions;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.util.ChatAllowedCharacters;
 
@@ -84,11 +85,38 @@ public class UITextArea extends UITextField implements IScrollable
 	 * Called when a cursor is updated.<br>
 	 * Offsets the content to make sure the cursor is still visible.
 	 */
+	/**
+	 * Scrolls three lines per wheel notch (ctrl: a page), rather than a quarter of the whole text.
+	 */
+	@Override
+	public float getScrollStep()
+	{
+		int overflow = contentSize().height() - innerSize().height();
+		if (overflow <= 0)
+			return 1;
+		FontOptions options = getFontOptions();
+		float lineHeight = options.getFont().getStringHeight(options) + options.lineSpacing();
+		float step = GuiScreen.isCtrlKeyDown() ? innerSize().height() : lineHeight * 3;
+		return Math.min(step / overflow, 1);
+	}
+
+	@Override
+	public void setText(String text)
+	{
+		super.setText(text);
+		//text changes don't fire a ContentUpdateEvent, so the scrollbar would stay disabled (no wheel, no scrollTo)
+		if (scrollbar != null)
+			scrollbar.updateScrollbar();
+	}
+
 	@Override
 	protected void onCursorUpdated()
 	{
 		if (getParent() == null)
 			return;
+
+		//typing changes the text height too
+		scrollbar.updateScrollbar();
 
 		startTimer = System.currentTimeMillis();
 

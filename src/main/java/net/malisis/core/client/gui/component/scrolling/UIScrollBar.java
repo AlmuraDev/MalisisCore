@@ -187,10 +187,11 @@ public abstract class UIScrollBar extends UIComponent implements IControlCompone
 
 	public void setOffset(int offset)
 	{
-		if (offset == 0)
+		int diff = sizeDiff();
+		if (offset == 0 || diff == 0)
 			this.offset = 0;
 		else
-			this.offset = (float) offset / sizeDiff();
+			this.offset = MathHelper.clamp((float) offset / diff, 0, 1);
 	}
 
 	/**

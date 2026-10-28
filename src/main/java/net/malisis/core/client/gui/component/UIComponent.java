@@ -66,6 +66,10 @@ import net.malisis.core.client.gui.event.component.StateChangeEvent.VisibleState
 import net.malisis.core.client.gui.render.GuiRenderer;
 import net.malisis.core.client.gui.render.IGuiRenderer;
 import net.malisis.core.util.MouseButton;
+import net.minecraft.client.renderer.GlStateManager;
+
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 
 /**
  * {@link UIComponent} is the base of everything drawn onto a GUI.<br>
@@ -899,11 +903,15 @@ public abstract class UIComponent implements IContent, IGuiRenderer, IKeyListene
 		if (!isVisible())
 			return;
 
-		//		if (getGui().isOverlay())
-		//		{
-		//			GlStateManager.blendFunc(GL11.GL_CONSTANT_ALPHA, GL11.GL_ONE_MINUS_CONSTANT_ALPHA);
-		//			GL14.glBlendColor(1, 1, 1, (float) getAlpha() / 255);
-		//		}
+		//blend color is applied when the buffer is drawn, so flush what came before and after this component
+		boolean translucent = getGui() != null && getGui().isOverlay() && getAlpha() < 255;
+		if (translucent)
+		{
+			if (getAlpha() <= 0)
+				return;
+			renderer.next();
+			setBlendAlpha(getAlpha());
+		}
 
 		//store last drawn component so that it can be set back after drawing.
 		//makes sure components overriding rendering and calling super still have correct
@@ -939,6 +947,25 @@ public abstract class UIComponent implements IContent, IGuiRenderer, IKeyListene
 			c.render(renderer);
 
 		renderer.currentComponent = oldComponent;
+
+		if (translucent)
+		{
+			renderer.next();
+			//back to the parent's transparency, or normal blending
+			setBlendAlpha(parent != null ? parent.getAlpha() : 255);
+		}
+	}
+
+	private static void setBlendAlpha(int alpha)
+	{
+		if (alpha >= 255)
+		{
+			GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+			return;
+		}
+		GlStateManager.enableBlend();
+		GlStateManager.blendFunc(GL11.GL_CONSTANT_ALPHA, GL11.GL_ONE_MINUS_CONSTANT_ALPHA);
+		GL14.glBlendColor(1, 1, 1, (float) alpha / 255);
 	}
 
 	/**

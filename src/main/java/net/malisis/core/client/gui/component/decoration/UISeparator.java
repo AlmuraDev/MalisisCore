@@ -30,7 +30,6 @@ import net.malisis.core.client.gui.MalisisGui;
 import net.malisis.core.client.gui.component.UIComponent;
 import net.malisis.core.client.gui.element.size.Size;
 import net.malisis.core.client.gui.element.size.Size.ISize;
-import net.malisis.core.client.gui.render.GuiIcon;
 import net.malisis.core.client.gui.render.shape.GuiShape;
 
 /**
@@ -44,12 +43,13 @@ public class UISeparator extends UIComponent
 	/** Whether the separator is vertical or horizontal. */
 	protected final boolean vertical;
 	/** Separator size. */
-	private final ISize separatorSize = Size.of(() -> (isVertical() ? size.width() : 1), () -> (isVertical() ? 1 : size.height()));
+	private final ISize separatorSize = Size.of(() -> (isVertical() ? 1 : size.width()), () -> (isVertical() ? size.height() : 1));
 
 	public UISeparator(boolean vertical)
 	{
 		this.vertical = vertical;
-		setForeground(GuiShape.builder(this).icon(GuiIcon.SEPARATOR).color(this::getColor).build());
+		//a plain line: the SEPARATOR icon stretched over the whole length shows its dark edge
+		setForeground(GuiShape.builder(this).color(this::getColor).build());
 	}
 
 	public UISeparator(MalisisGui gui)

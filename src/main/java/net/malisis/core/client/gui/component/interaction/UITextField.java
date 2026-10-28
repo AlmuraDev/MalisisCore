@@ -943,7 +943,9 @@ public class UITextField extends UIComponent implements IContentHolder, IClipabl
 		{
 			index = MathHelper.clamp(index, 0, text.length());
 			StringWalker walker = guiText.walker();
-			walker.walkToIndex(index - 1);
+			//a new walker is already before the first character: walking to -1 would run to the end
+			if (index > 0)
+				walker.walkToIndex(index - 1);
 			set(walker);
 			lastX = x;
 			onCursorUpdated();

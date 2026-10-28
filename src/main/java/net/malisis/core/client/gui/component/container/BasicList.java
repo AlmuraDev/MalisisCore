@@ -448,6 +448,8 @@ public class BasicList<T> extends BasicContainer<BasicList<T>> {
     public ItemComponent(final MalisisGui gui, final BasicList<T> parent, final T item, @Nullable final Consumer<T> onDoubleClick) {
       // Set the parent
       this.setParent(parent);
+      // construct() and the item code it calls use getGui() before this is added to the screen, as in 6.5.x
+      this.gui = gui != null ? gui : parent.getGui();
 
       // Set the item
       this.item = item;
@@ -514,7 +516,7 @@ public class BasicList<T> extends BasicContainer<BasicList<T>> {
         final BasicList<?> parent = (BasicList<?>) this.parent;
         // Fill the width of the list, less the scrollbar when it shows
         final int width = parent.getWidth() - parent.getLeftPadding() - parent.getRightPadding() - (parent.getScrollBar().isEnabled() ?
-          parent.getScrollBar().getWidth() + 5 : 0);
+          parent.getScrollBar().getWidth() + 1 : 0);
         if (width != this.getWidth()) {
           this.setSize(width, this.getRawHeight());
         }

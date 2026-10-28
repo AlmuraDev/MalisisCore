@@ -466,9 +466,12 @@ public class MalisisFont
 		if (StringUtils.isEmpty(text))
 			return 0;
 
+		//widest the line gets (width() is only the last character's)
 		StringWalker walker = new StringWalker(text, options);
-		walker.walkToEnd();
-		return walker.width();
+		float width = 0;
+		while (walker.walk())
+			width = Math.max(width, walker.lineWidth());
+		return width;
 	}
 
 	/**

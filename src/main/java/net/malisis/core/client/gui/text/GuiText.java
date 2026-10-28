@@ -364,6 +364,9 @@ public class GuiText implements IGuiRenderer, IContent, IChild<UIComponent>
 			w = Math.max(info.width(), w);
 			h += info.height() + fontOptions.lineSpacing();
 		}
+		//spacing goes between lines, not after the last one (as 6.5.x sized labels)
+		if (!lines.isEmpty())
+			h -= fontOptions.lineSpacing();
 		size = Size.of(w, h);
 
 		for (LineInfo info : lines)
