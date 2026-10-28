@@ -25,9 +25,8 @@
 package net.malisis.core.client.gui;
 
 import net.malisis.core.MalisisCore;
-import net.malisis.core.client.gui.component.IKeyListener;
 import net.malisis.core.client.gui.component.UIComponent;
-import net.malisis.core.client.gui.component.control.IScrollable;
+import net.malisis.core.client.gui.element.Padding;
 import net.malisis.core.inventory.MalisisInventoryContainer;
 import net.malisis.core.util.MouseButton;
 import net.minecraft.client.Minecraft;
@@ -68,7 +67,6 @@ public abstract class BasicScreen extends MalisisGui {
 
   public BasicScreen(@Nullable final GuiScreen parent, final boolean drawParentInBackground) {
     this.parent = parent;
-    //        this.renderer.setDefaultTexture(GuiConfig.SpriteSheet.ALMURA); // TODO: ?
     this.drawParentInBackground = drawParentInBackground;
   }
 
@@ -79,7 +77,7 @@ public abstract class BasicScreen extends MalisisGui {
    * @param padding The padding to use
    * @return The padded X position
    */
-  public static int getPaddedX(final UIComponent<?> component, final int padding) {
+  public static int getPaddedX(final UIComponent component, final int padding) {
     return getPaddedX(component, padding, Anchor.LEFT);
   }
 
@@ -91,7 +89,7 @@ public abstract class BasicScreen extends MalisisGui {
    * @param anchor The direction we're going
    * @return The padded X position
    */
-  public static int getPaddedX(final UIComponent<?> component, final int padding, final int anchor) {
+  public static int getPaddedX(final UIComponent component, final int padding, final int anchor) {
     if (anchor == Anchor.LEFT) {
       return component.getX() + component.getWidth() + padding;
     } else if (anchor == Anchor.RIGHT) {
@@ -108,7 +106,7 @@ public abstract class BasicScreen extends MalisisGui {
    * @param padding The padding to use
    * @return The padded Y position
    */
-  public static int getPaddedY(final UIComponent<?> component, final int padding) {
+  public static int getPaddedY(final UIComponent component, final int padding) {
     return getPaddedY(component, padding, Anchor.TOP);
   }
 
@@ -120,7 +118,7 @@ public abstract class BasicScreen extends MalisisGui {
    * @param anchor The direction we're going
    * @return The padded Y position
    */
-  public static int getPaddedY(final UIComponent<?> component, final int padding, final int anchor) {
+  public static int getPaddedY(final UIComponent component, final int padding, final int anchor) {
     if (anchor == Anchor.BOTTOM) {
       return component.getY() - component.getHeight() - padding;
     } else if (anchor == Anchor.TOP) {
@@ -136,8 +134,8 @@ public abstract class BasicScreen extends MalisisGui {
    * @param component The component to get width from
    * @return The width of a component with padding removed
    */
-  public static int getPaddedWidth(final UIComponent<? extends IScrollable> component) {
-    return component.getWidth() - component.self().getLeftPadding() - component.self().getRightPadding();
+  public static int getPaddedWidth(final UIComponent component) {
+    return component.getWidth() - Padding.of(component).horizontal();
   }
 
   /**
@@ -146,8 +144,8 @@ public abstract class BasicScreen extends MalisisGui {
    * @param component The component to get height from
    * @return The height of a component with padding removed
    */
-  public static int getPaddedHeight(final UIComponent<? extends IScrollable> component) {
-    return component.getHeight() - component.self().getTopPadding() - component.self().getBottomPadding();
+  public static int getPaddedHeight(final UIComponent component) {
+    return component.getHeight() - Padding.of(component).vertical();
   }
 
   @Override
@@ -175,12 +173,11 @@ public abstract class BasicScreen extends MalisisGui {
   }
 
   @Override
-  public void update(final int mouseX, final int mouseY, final float partialTick) {
+  public void update() {
     if (this.drawParentInBackground) {
-      Optional.ofNullable(this.parent).filter(screen -> screen instanceof MalisisGui)
-        .ifPresent(screen -> ((MalisisGui) screen).update(mouseX, mouseY, partialTick));
+      Optional.ofNullable(this.parent).filter(screen -> screen instanceof MalisisGui).ifPresent(screen -> ((MalisisGui) screen).update());
     }
-    super.update(mouseX, mouseY, partialTick);
+    super.update();
   }
 
   @Override
@@ -209,12 +206,14 @@ public abstract class BasicScreen extends MalisisGui {
     this.mc.displayGuiScreen(Optional.ofNullable(this.parent).orElse(null));
   }
 
+  /**
+   * Same as {@link MalisisGui#mousePressed(UIComponent, int)}, except the component is focused before the button press is sent to it.
+   */
   @Override
-  protected void mouseClicked(final int x, final int y, final int button) {
+  protected void mousePressed(final UIComponent component, final int button) {
     try {
       final long time = System.currentTimeMillis();
 
-      final UIComponent<?> component = getComponentAt(x, y);
       if (component != null && component.isEnabled()) {
         component.setFocused(true);
 
@@ -222,12 +221,12 @@ public abstract class BasicScreen extends MalisisGui {
         final boolean doubleClick = button == this.lastClickButton && time - this.lastClickTime < 250 && component == this.focusedComponent;
 
         if (doubleClick) {
-          regularClick = !component.onDoubleClick(x, y, MouseButton.getButton(button));
+          regularClick = !component.onDoubleClick(MouseButton.getButton(button));
           this.lastClickTime = 0;
         }
 
         if (regularClick) {
-          component.onButtonPress(x, y, MouseButton.getButton(button));
+          component.onButtonPress(MouseButton.getButton(button));
           if (this.draggedComponent == null) {
             this.draggedComponent = component;
           }
@@ -249,46 +248,15 @@ public abstract class BasicScreen extends MalisisGui {
     }
   }
 
+  /**
+   * Keys only go to the focused component: the hovered one would steal keys meant for the tab order of text boxes.
+   */
   @Override
-  protected void keyTyped(final char keyChar, final int keyCode) {
-    try {
-      boolean ret = false;
-      for (final IKeyListener listener : keyListeners) {
-        ret |= listener.onKeyTyped(keyChar, keyCode);
-      }
-
-      if (ret) {
-        return;
-      }
-
-      if (focusedComponent != null && !keyListeners.contains(focusedComponent) && focusedComponent.onKeyTyped(keyChar, keyCode)) {
-        return;
-      }
-
-      // Removed logic from parent that attempts to fire onKeyTyped on the hovered component. This causes issues with a tab indexing system.
-
-      if (isGuiCloseKey(keyCode) && mc.currentScreen == this) {
-        close();
-      }
-
-      if (!MalisisCore.isObfEnv && isCtrlKeyDown() && (currentGui() != null || isOverlay)) {
-        if (keyCode == Keyboard.KEY_R) {
-          clearScreen();
-          setResolution();
-          construct();
-        }
-
-        if (keyCode == Keyboard.KEY_D) {
-          this.debug = !this.debug;
-        }
-      }
-    } catch (final Exception e) {
-      MalisisCore.message("A problem occurred while handling key typed for " + e.getClass().getSimpleName() + ": " + e.getMessage());
-      e.printStackTrace(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-    }
+  protected boolean sendKeysToHoveredComponent() {
+    return false;
   }
 
-  public void setFocusedComponent(final UIComponent<?> component) {
+  public void setFocusedComponent(final UIComponent component) {
     this.focusedComponent = component;
   }
 
