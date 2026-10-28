@@ -588,15 +588,24 @@ public abstract class MalisisGui extends GuiScreen
 
 		ar.animate();
 
-		renderer.setup(partialTick);
-
+		//before the renderer starts drawing, as in 6.5.x: both may draw with the Tessellator, which the renderer then holds
 		try
 		{
 			update();
 
 			if (guiscreenBackground)
 				drawWorldBackground(1);
+		}
+		catch (Exception e)
+		{
+			MalisisCore.message("A problem occured while updating screen : " + getClass().getSimpleName() + ": " + e.getMessage());
+			MalisisCore.log.error("A problem occured while updating " + getClass().getSimpleName(), e);
+		}
 
+		renderer.setup(partialTick);
+
+		try
+		{
 			screen.render(renderer);
 
 			//don't draw tooltip if mouse has itemStack

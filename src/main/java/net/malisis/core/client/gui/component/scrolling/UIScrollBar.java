@@ -262,7 +262,8 @@ public abstract class UIScrollBar extends UIComponent implements IControlCompone
 			scrollTo(0);
 		if (offset > 1)
 			scrollTo(1);
-		//setEnabled(!hide);
+		//disabled when there is nothing to scroll, as in 6.5.x (code checks isEnabled() to see if the scrollbar takes space)
+		setEnabled(!hide);
 		if (autoHide)
 			setVisible(!hide);
 	}

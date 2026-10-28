@@ -298,7 +298,8 @@ public class GuiText implements IGuiRenderer, IContent, IChild<UIComponent>
 	public void setFontOptions(FontOptions fontOptions)
 	{
 		checkNotNull(fontOptions);
-		buildLines = this.fontOptions.isBold() != fontOptions.isBold() || this.fontOptions.getFontScale() != fontOptions.getFontScale();
+		//keep a pending rebuild (lines are only built when first drawn)
+		buildLines |= this.fontOptions.isBold() != fontOptions.isBold() || this.fontOptions.getFontScale() != fontOptions.getFontScale();
 		this.fontOptions = fontOptions;
 	}
 
