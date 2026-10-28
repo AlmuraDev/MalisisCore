@@ -201,6 +201,16 @@ public class UITextField extends UIComponent implements IContentHolder, IClipabl
 		return guiText;
 	}
 
+	public FontOptions getFontOptions()
+	{
+		return guiText.getFontOptions();
+	}
+
+	public void setFontOptions(FontOptions fontOptions)
+	{
+		guiText.setFontOptions(fontOptions);
+	}
+
 	/**
 	 * Gets the currently selected text.
 	 *

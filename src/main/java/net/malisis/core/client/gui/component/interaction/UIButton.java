@@ -35,6 +35,7 @@ import net.malisis.core.client.gui.component.content.IContentHolder;
 import net.malisis.core.client.gui.element.position.Position;
 import net.malisis.core.client.gui.element.position.Position.IPosition;
 import net.malisis.core.client.gui.element.size.Size;
+import net.malisis.core.client.gui.event.ComponentEvent;
 import net.malisis.core.client.gui.render.GuiIcon;
 import net.malisis.core.client.gui.render.shape.GuiShape;
 import net.malisis.core.client.gui.text.GuiText;
@@ -183,6 +184,7 @@ public class UIButton extends UIComponent implements IContentHolder
 	public boolean onClick()
 	{
 		executeAction();
+		fireEvent(new ClickEvent(this, MalisisGui.MOUSE_POSITION.x(), MalisisGui.MOUSE_POSITION.y()));
 		return true;
 	}
 
@@ -220,4 +222,46 @@ public class UIButton extends UIComponent implements IContentHolder
 		return "[" + TextFormatting.GREEN + content + TextFormatting.RESET + "] " + super.getPropertyString();
 	}
 
+	/**
+	 * Event fired when a {@link UIButton} is clicked, after its action ran.
+	 */
+	public static class ClickEvent extends ComponentEvent<UIButton>
+	{
+		/** Position of the mouse when clicked . */
+		private int x, y;
+
+		/**
+		 * Instantiates a new {@link ClickEvent}.
+		 *
+		 * @param component the component
+		 * @param x the x coordinate of the mouse
+		 * @param y the y coordinate of the mouse
+		 */
+		public ClickEvent(UIButton component, int x, int y)
+		{
+			super(component);
+			this.x = x;
+			this.y = y;
+		}
+
+		/**
+		 * Gets the x coordinate of the mouse.
+		 *
+		 * @return the x
+		 */
+		public int getX()
+		{
+			return x;
+		}
+
+		/**
+		 * Gets the y coordinate of the mouse.
+		 *
+		 * @return the y
+		 */
+		public int getY()
+		{
+			return y;
+		}
+	}
 }

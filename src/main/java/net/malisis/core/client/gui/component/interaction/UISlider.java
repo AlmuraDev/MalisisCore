@@ -59,6 +59,9 @@ public class UISlider<T> extends UIComponent implements IContentHolder
 
 	/** Amount of offset scrolled by when using the scroll wheel. */
 	protected float scrollStep = 0.05F;
+	/** Font options set with {@link #setFontOptions(FontOptions)} and {@link #setHoveredFontOptions(FontOptions)}. */
+	protected FontOptions fontOptions;
+	protected FontOptions hoveredFontOptions;
 
 	/** Converter from float (0-1 offset) to the value. */
 	protected Converter<Float, T> converter;
@@ -96,8 +99,16 @@ public class UISlider<T> extends UIComponent implements IContentHolder
 		return text;
 	}
 
-	public UISlider<T> setHoveredFontOptions(FontOptions fontOptions) {
+	/**
+	 * Sets the {@link FontOptions} used for the text while this {@link UISlider} is hovered.
+	 *
+	 * @param fontOptions the font options, null to use the regular ones
+	 * @return this UI slider
+	 */
+	public UISlider<T> setHoveredFontOptions(FontOptions fontOptions)
+	{
 		this.hoveredFontOptions = fontOptions;
+		applyFontOptions();
 		return this;
 	}
 
@@ -131,7 +142,16 @@ public class UISlider<T> extends UIComponent implements IContentHolder
 
 	public void setFontOptions(FontOptions fontOptions)
 	{
-		text.setFontOptions(fontOptions);
+		this.fontOptions = fontOptions;
+		applyFontOptions();
+	}
+
+	private void applyFontOptions()
+	{
+		if (fontOptions == null)
+			fontOptions = text.getFontOptions();
+		text.setFontOptions(hoveredFontOptions == null	? fontOptions
+														: fontOptions.toBuilder().when(this::isHovered).from(hoveredFontOptions).build());
 	}
 
 	public int scrollPosition()
