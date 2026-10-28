@@ -45,7 +45,7 @@ import net.minecraft.util.text.TextFormatting;
  */
 public class UICheckBox extends UIComponent implements IContentHolder
 {
-	protected final FontOptions fontOptions = FontOptions	.builder()
+	protected FontOptions fontOptions = FontOptions	.builder()
 															.color(0x444444)
 															.when(this::isHovered)
 															.color(0x777777)
@@ -59,7 +59,8 @@ public class UICheckBox extends UIComponent implements IContentHolder
 
 	public UICheckBox(String text)
 	{
-		setText(text);
+		if (text != null)
+			setText(text);
 		//TODO: height = max(14, heightOfContent) ?
 		setSize(Size.sizeOfContent(this, 15, 4));
 
@@ -108,6 +109,23 @@ public class UICheckBox extends UIComponent implements IContentHolder
 	{
 		GuiText gt = GuiText.of(text, fontOptions);
 		setContent(gt);
+	}
+
+	/**
+	 * Sets the {@link FontOptions} of the text.
+	 *
+	 * @param fontOptions the font options
+	 */
+	public void setFontOptions(FontOptions fontOptions)
+	{
+		this.fontOptions = fontOptions;
+		if (content instanceof GuiText)
+			((GuiText) content).setFontOptions(fontOptions);
+	}
+
+	public FontOptions getFontOptions()
+	{
+		return fontOptions;
 	}
 
 	/**

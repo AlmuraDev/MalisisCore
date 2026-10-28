@@ -28,11 +28,13 @@ import static com.google.common.base.Preconditions.*;
 import static net.malisis.core.client.gui.element.position.Positions.*;
 import static net.malisis.core.client.gui.element.size.Sizes.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.IntSupplier;
 import java.util.function.Predicate;
 
 import org.lwjgl.input.Keyboard;
@@ -80,6 +82,10 @@ public class UISelect<T> extends UIComponent
 	protected Function<T, String> stringFunction = Objects::toString;
 	/** Predicate for option disability */
 	protected Predicate<T> disablePredicate = Predicates.alwaysFalse();
+	/** Max number of options shown at once, 0 for all of them (the options scroll). */
+	protected int maxDisplayedOptions = 0;
+	/** Font options of the options and of the selected option. */
+	protected FontOptions fontOptions = FontOptions.builder().color(0xFFFFFF).shadow().build();
 
 	/**
 	 * Instantiates a new {@link UISelect}.
@@ -87,7 +93,7 @@ public class UISelect<T> extends UIComponent
 	 * @param width the width
 	 * @param values the values
 	 */
-	public UISelect(int width, List<T> values)
+	public UISelect(int width, Collection<T> values)
 	{
 		setSize(Size.of(width, 12));
 		setOptions(values);
@@ -173,9 +179,105 @@ public class UISelect<T> extends UIComponent
 		if (elements == null)
 			elements = Collections.emptyList();
 
-		optionsContainer.setElements(elements);
+		//a copy as a list: the options are read by index
+		optionsContainer.setElements(new ArrayList<>(elements));
 		return this;
 	}
+
+	// #region 6.5.x compatibility
+
+	/**
+	 * Sets the function giving the label of each option.
+	 *
+	 * @param labelFunction the label function
+	 * @return this {@link UISelect}
+	 */
+	public UISelect<T> setLabelFunction(Function<T, String> labelFunction)
+	{
+		setStringFunction(labelFunction);
+		rebuildOptions();
+		return this;
+	}
+
+	/**
+	 * Sets the {@link FontOptions} of the options and of the selected option. Hovered and selected options keep their colors.
+	 *
+	 * @param fontOptions the font options
+	 * @return this {@link UISelect}
+	 */
+	public UISelect<T> setFontOptions(FontOptions fontOptions)
+	{
+		this.fontOptions = checkNotNull(fontOptions);
+		rebuildOptions();
+		return this;
+	}
+
+	/**
+	 * Sets the max number of options shown at once, the others are reached by scrolling.
+	 *
+	 * @param amount the amount, 0 for all of them
+	 * @return this {@link UISelect}
+	 */
+	public UISelect<T> maxDisplayedOptions(int amount)
+	{
+		this.maxDisplayedOptions = amount;
+		return this;
+	}
+
+	/**
+	 * Sets the width of the options: {@link #SELECT_WIDTH}, {@link #LONGEST_OPTION} or a max width (never less than the select).
+	 *
+	 * @param optionsWidth the options width
+	 * @return this {@link UISelect}
+	 */
+	public UISelect<T> setOptionsWidth(int optionsWidth)
+	{
+		this.maxOptionsWidth = optionsWidth;
+		return this;
+	}
+
+	public void setSelectedOption(T option)
+	{
+		setSelected(option);
+	}
+
+	public T getSelectedValue()
+	{
+		return selected();
+	}
+
+	/**
+	 * Gets the label of the selected option.
+	 *
+	 * @return the label, empty if nothing is selected
+	 */
+	public String getSelectedLabel()
+	{
+		T selected = selected();
+		return selected == null ? "" : stringFunction.apply(selected);
+	}
+
+	private void rebuildOptions()
+	{
+		optionsContainer.setElements(new ArrayList<>(options()));
+	}
+
+	private int optionsWidth()
+	{
+		int selectWidth = size().width();
+		if (maxOptionsWidth == SELECT_WIDTH)
+			return selectWidth;
+
+		int longest = options()	.stream()
+								.mapToInt(o -> (int) Math.ceil(fontOptions.getFont().getStringWidth(stringFunction.apply(o), fontOptions)))
+								.max()
+								.orElse(0) + 4;
+		if (maxOptionsWidth == LONGEST_OPTION)
+			return Math.max(selectWidth, longest);
+		return Math.max(selectWidth, Math.min(maxOptionsWidth, longest));
+	}
+
+	// #end 6.5.x compatibility
 
 	/**
 	 * Sets the selected option.<br>
@@ -329,7 +431,15 @@ public class UISelect<T> extends UIComponent
 			//TODO: place it above if room below is too small
 			setPosition(Position.of(() -> UISelect.this.screenPosition().x(),
 									() -> UISelect.this.screenPosition().y() + UISelect.this.size().height()));
-			setSize(Size.of(widthRelativeTo(UISelect.this, 1.0F, 0), heightOfContent(this, 0)));
+			IntSupplier contentHeight = heightOfContent(this, 0);
+			setSize(Size.of(UISelect.this::optionsWidth, () -> {
+				//options are all as high, limit to maxDisplayedOptions of them
+				int height = contentHeight.getAsInt();
+				if (maxDisplayedOptions <= 0)
+					return height;
+				int rowHeight = getComponents().stream().findFirst().map(c -> c.size().height()).orElse(0);
+				return Math.min(height, maxDisplayedOptions * rowHeight + padding.vertical());
+			}));
 			setZIndex(300);
 			setBackground(GuiShape.builder(this).color(UISelect.this::getColor).icon(GuiIcon.SELECT_BOX).border(1).build());
 
@@ -459,15 +569,13 @@ public class UISelect<T> extends UIComponent
 	public class Option extends UILabel implements IOptionComponent
 	{
 		/** The default {@link FontOptions} to use for this {@link UISelect}. */
-		protected FontOptions fontOptions = FontOptions	.builder()
-														.color(0xFFFFFF)
-														.shadow()
-														.when(this::isHovered)
-														.color(0xFED89F)
-														.when(this::isSelected)
-														.color(0x9EA8DF)
-														.build();
-		protected FontOptions selectedfontOptions = FontOptions.builder().color(0xFFFFFF).shadow().build();
+		protected FontOptions fontOptions = UISelect.this.fontOptions	.toBuilder()
+																		.when(this::isHovered)
+																		.color(0xFED89F)
+																		.when(this::isSelected)
+																		.color(0x9EA8DF)
+																		.build();
+		protected FontOptions selectedfontOptions = UISelect.this.fontOptions;
 
 		GuiShape background = GuiShape.builder(this).color(0x5E789F).alpha(() -> {
 			if (isHovered())
