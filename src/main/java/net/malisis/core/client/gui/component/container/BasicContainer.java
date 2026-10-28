@@ -431,6 +431,22 @@ public class BasicContainer<T extends BasicContainer<T>> extends UIContainer imp
     return this;
   }
 
+  public BasicContainer<T> setLeftPadding(final int left) {
+    return this.setPadding(left, this.getTopPadding(), this.getRightPadding(), this.getBottomPadding());
+  }
+
+  public BasicContainer<T> setTopPadding(final int top) {
+    return this.setPadding(this.getLeftPadding(), top, this.getRightPadding(), this.getBottomPadding());
+  }
+
+  public BasicContainer<T> setRightPadding(final int right) {
+    return this.setPadding(this.getLeftPadding(), this.getTopPadding(), right, this.getBottomPadding());
+  }
+
+  public BasicContainer<T> setBottomPadding(final int bottom) {
+    return this.setPadding(this.getLeftPadding(), this.getTopPadding(), this.getRightPadding(), bottom);
+  }
+
   public int getLeftPadding() {
     return this.padding().left();
   }

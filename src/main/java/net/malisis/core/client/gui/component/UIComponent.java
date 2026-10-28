@@ -208,6 +208,9 @@ public abstract class UIComponent implements IContent, IGuiRenderer, IKeyListene
 	// #region 6.5.x compatibility
 	// Anchor/int based positions and sizes from the 6.5.x GUI API, mapped onto IPosition/ISize. They return this, typed by the caller.
 
+	/** A width or height of 0 for {@link #setSize(int, int)}: the parent's (padded) width or height. */
+	public final static int INHERITED = 0;
+
 	/**
 	 * Sets the position of this {@link UIComponent}, keeping its current {@link Anchor}.
 	 *
