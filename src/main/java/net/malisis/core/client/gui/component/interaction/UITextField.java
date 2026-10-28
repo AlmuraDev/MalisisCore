@@ -311,6 +311,19 @@ public class UITextField extends UIComponent implements IContentHolder, IClipabl
 	}
 
 	/**
+	 * Sets the size of this {@link UITextField}. As in 6.5.x, a single line field is always 12 high.
+	 *
+	 * @param width the width
+	 * @param height the height, used for multiple lines only
+	 * @return this text field
+	 */
+	@Override
+	public <T extends UIComponent> T setSize(int width, int height)
+	{
+		return super.setSize(width, guiText.isMultiLine() ? height : 12);
+	}
+
+	/**
 	 * Sets the focused.
 	 *
 	 * @param focused the new focused
