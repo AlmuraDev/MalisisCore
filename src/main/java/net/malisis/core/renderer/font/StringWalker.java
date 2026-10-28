@@ -302,6 +302,12 @@ public class StringWalker
 		charIndex++;
 
 		checkFormatting();
+		//the line ended with formatting codes, skipped past its end: on to the next line, or the end of the text
+		if (charIndex > endLineIndex)
+		{
+			charIndex = endLineIndex;
+			return nextCharacter();
+		}
 		FontOptions options = currentStyle();
 
 		c = currentText.charAt(charIndex);

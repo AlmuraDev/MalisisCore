@@ -26,6 +26,7 @@ package net.malisis.core.client.gui.text;
 
 import net.malisis.core.client.gui.IPredicatedSupplier;
 import net.malisis.core.renderer.font.FontOptions;
+import net.malisis.core.renderer.font.FontOptions.FontOptionsBuilder;
 import net.malisis.core.renderer.font.MalisisFont;
 
 /**
@@ -131,6 +132,23 @@ public class PredicatedFontOptions extends FontOptions
 	public boolean hasShadow()
 	{
 		return get().hasShadow();
+	}
+
+	@Override
+	public int lineSpacing()
+	{
+		return get().lineSpacing();
+	}
+
+	/**
+	 * Gets a builder from the options currently in effect (the inherited one would copy this placeholder's empty fields).
+	 *
+	 * @return the builder
+	 */
+	@Override
+	public FontOptionsBuilder toBuilder()
+	{
+		return get().toBuilder();
 	}
 
 	/**
