@@ -24,27 +24,59 @@
  */
 package net.malisis.core.client.gui.component.decoration;
 
+import net.malisis.core.client.gui.MalisisGui;
 import net.malisis.core.client.gui.component.container.BasicContainer;
 import net.malisis.core.util.FontColors;
-import net.malisis.core.client.gui.MalisisGui;
 
 public class BasicLine extends BasicContainer<BasicLine> {
 
-  public BasicLine(final MalisisGui gui, final int width) {
-    this(gui, width, 1, false);
+  public BasicLine(final int width) {
+    this(width, 1, false);
   }
 
-  public BasicLine(final MalisisGui gui, final int size, final boolean vertical) {
-    this(gui, size, 1, vertical);
+  public BasicLine(final int size, final boolean vertical) {
+    this(size, 1, vertical);
   }
 
-  public BasicLine(final MalisisGui gui, final int width, final int thickness) {
-    this(gui, width, thickness, false);
+  public BasicLine(final int width, final int thickness) {
+    this(width, thickness, false);
   }
 
-  public BasicLine(final MalisisGui gui, final int size, final int thickness, final boolean vertical) {
-    super(gui, vertical ? thickness : size, vertical ? size : thickness);
+  public BasicLine(final int size, final int thickness, final boolean vertical) {
+    super(vertical ? thickness : size, vertical ? size : thickness);
     this.setColor(FontColors.WHITE);
     this.setBackgroundAlpha(185);
+  }
+
+  /**
+   * @deprecated components no longer take their gui, use {@link #BasicLine(int)}
+   */
+  @Deprecated
+  public BasicLine(final MalisisGui gui, final int width) {
+    this(width);
+  }
+
+  /**
+   * @deprecated components no longer take their gui, use {@link #BasicLine(int, boolean)}
+   */
+  @Deprecated
+  public BasicLine(final MalisisGui gui, final int size, final boolean vertical) {
+    this(size, vertical);
+  }
+
+  /**
+   * @deprecated components no longer take their gui, use {@link #BasicLine(int, int)}
+   */
+  @Deprecated
+  public BasicLine(final MalisisGui gui, final int width, final int thickness) {
+    this(width, thickness);
+  }
+
+  /**
+   * @deprecated components no longer take their gui, use {@link #BasicLine(int, int, boolean)}
+   */
+  @Deprecated
+  public BasicLine(final MalisisGui gui, final int size, final int thickness, final boolean vertical) {
+    this(size, thickness, vertical);
   }
 }

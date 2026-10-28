@@ -24,33 +24,36 @@
  */
 package net.malisis.core.client.gui.component.container;
 
-import net.malisis.core.client.gui.component.decoration.BasicLine;
-import net.malisis.core.client.gui.component.interaction.button.BasicSimpleButton;
-import net.malisis.core.util.FontColors;
 import com.google.common.eventbus.Subscribe;
 import net.malisis.core.client.gui.Anchor;
-import net.malisis.core.client.gui.GuiRenderer;
 import net.malisis.core.client.gui.MalisisGui;
 import net.malisis.core.client.gui.component.UIComponent;
+import net.malisis.core.client.gui.component.decoration.BasicLine;
 import net.malisis.core.client.gui.component.interaction.UIButton;
+import net.malisis.core.client.gui.component.interaction.button.BasicSimpleButton;
+import net.malisis.core.client.gui.element.Padding;
 import net.malisis.core.renderer.font.FontOptions;
+import net.malisis.core.util.FontColors;
 import net.malisis.core.util.MouseButton;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
 public class BasicForm extends BasicContainer<BasicForm> {
+
   private BasicContainer<?> titleContainer;
   private BasicLine line;
   private BasicSimpleButton closeButton;
   private boolean closable, movable, dragging;
+  /** Where the mouse grabbed the form, from its top left corner. */
+  private int dragOffsetX, dragOffsetY;
 
-  public BasicForm(final MalisisGui gui, final int width, final int height) {
-    this(gui, width, height, "");
+  public BasicForm(final int width, final int height) {
+    this(width, height, "");
   }
 
-  public BasicForm(final MalisisGui gui, final int width, final int height, final String title) {
-    super(gui, title, width, height);
+  public BasicForm(final int width, final int height, final String title) {
+    super(title, width, height);
 
     // Defaults
     this.setAnchor(Anchor.CENTER | Anchor.MIDDLE);
@@ -60,37 +63,53 @@ public class BasicForm extends BasicContainer<BasicForm> {
     this.setColor(Integer.MIN_VALUE);
     this.setPadding(3, 20, 3, 3);
 
-    this.construct(gui);
+    this.construct();
 
     // Needs to happen after construct
     this.setClosable(true);
   }
 
-  private void construct(final MalisisGui gui) {
-    this.titleContainer = new BasicContainer<>(gui);
+  /**
+   * @deprecated components no longer take their gui, use {@link #BasicForm(int, int)}
+   */
+  @Deprecated
+  public BasicForm(final MalisisGui gui, final int width, final int height) {
+    this(width, height);
+  }
+
+  /**
+   * @deprecated components no longer take their gui, use {@link #BasicForm(int, int, String)}
+   */
+  @Deprecated
+  public BasicForm(final MalisisGui gui, final int width, final int height, final String title) {
+    this(width, height, title);
+  }
+
+  private void construct() {
+    this.titleContainer = new BasicContainer<>();
     this.titleContainer.setPosition(-this.getLeftBorderedPadding(), -19, Anchor.TOP | Anchor.LEFT);
-    this.titleContainer.setSize(this.getWidth() - this.getRightBorderedPadding(), 15);
+    this.titleContainer.setSize(net.malisis.core.client.gui.element.size.Size.of(() -> this.getWidth() - this.getRightBorderedPadding(), 15));
     this.titleContainer.setColor(0x363636);
     this.titleContainer.setBackgroundAlpha(215);
 
     this.add(this.titleContainer);
 
-    this.line = new BasicLine(gui, this.getWidth() + this.getLeftBorderedPadding() + this.getRightBorderedPadding());
+    this.line = new BasicLine(1);
+    this.line.setSize(net.malisis.core.client.gui.element.size.Size.of(() -> this.getWidth() + this.getLeftBorderedPadding() + this.getRightBorderedPadding(), 1));
     this.line.setPosition(-(this.getLeftBorderedPadding()), -4);
 
     this.add(this.line);
 
-    this.closeButton = new BasicSimpleButton(getGui(), "x");
+    this.closeButton = new BasicSimpleButton();
+    this.closeButton.setFontOptions(FontColors.GRAY_FO.toBuilder().when(() -> this.closeButton.isHovered()).color(FontColors.WHITE).build());
+    this.closeButton.setText("x");
     this.closeButton.setName("button.form.close");
     this.closeButton.setPosition(0, 0, Anchor.MIDDLE | Anchor.RIGHT);
     this.closeButton.register(this);
 
-    if (this.titleLabel != null) {
-      this.remove(this.titleLabel);
-      this.titleContainer.add(this.titleLabel);
-      this.titleLabel.setFontOptions(FontColors.WHITE_FO.toBuilder().shadow(false).build());
-      this.titleLabel.setPosition(0, 1, Anchor.MIDDLE | Anchor.CENTER);
-    }
+    this.titleContainer.add(this.titleLabel);
+    this.titleLabel.setFontOptions(FontColors.WHITE_FO.toBuilder().shadow(false).build());
+    this.titleLabel.setPosition(0, 1, Anchor.MIDDLE | Anchor.CENTER);
   }
 
   public boolean isClosable() {
@@ -118,11 +137,30 @@ public class BasicForm extends BasicContainer<BasicForm> {
     return this;
   }
 
+  /**
+   * Sets the title shown in the title bar.
+   *
+   * @param title the title
+   * @return this form
+   */
+  @Override
+  public BasicForm setTitle(final String title) {
+    // The title label lives in the title bar, see construct()
+    this.titleLabel.setText(title == null ? "" : title);
+    return this;
+  }
+
+  @Override
+  public String getTitle() {
+    return this.titleLabel.getText();
+  }
+
   public void setTitle(final String text, final FontOptions options) {
-    super.setTitle(text);
+    this.setTitle(text);
     this.titleLabel.setFontOptions(options);
   }
 
+  @Override
   public void onClose() {
     final MalisisGui currentGui = getGui();
     if (currentGui != null) {
@@ -143,55 +181,46 @@ public class BasicForm extends BasicContainer<BasicForm> {
   }
 
   @Override
-  public boolean onButtonPress(final int x, final int y, final MouseButton button) {
-    this.dragging = !this.closeButton.isInsideBounds(x, y) && this.titleContainer.isInsideBounds(x, y);
-    return super.onButtonPress(x, y, button);
+  public boolean onButtonPress(final MouseButton button) {
+    final int mouseX = MalisisGui.MOUSE_POSITION.x();
+    final int mouseY = MalisisGui.MOUSE_POSITION.y();
+    this.dragging = !this.closeButton.isInsideBounds(mouseX, mouseY) && this.titleContainer.isInsideBounds(mouseX, mouseY);
+    this.dragOffsetX = mouseX - this.screenX();
+    this.dragOffsetY = mouseY - this.screenY();
+    return super.onButtonPress(button);
   }
 
   @Override
-  public boolean onButtonRelease(final int x, final int y, final MouseButton button) {
+  public boolean onButtonRelease(final MouseButton button) {
     if (button == MouseButton.LEFT && this.dragging) {
       this.dragging = false;
     }
-    return super.onButtonRelease(x, y, button);
+    return super.onButtonRelease(button);
   }
 
   @Override
-  public boolean onDrag(final int lastX, final int lastY, final int x, final int y, final MouseButton button) {
+  public boolean onDrag(final MouseButton button) {
     if (!this.movable || !this.dragging) {
-      return super.onDrag(lastX, lastY, x, y, button);
+      return super.onDrag(button);
     }
 
-    final UIComponent<?> parentContainer = getParent();
+    final UIComponent parentContainer = getParent();
     if (parentContainer == null) {
-      return super.onDrag(lastX, lastY, x, y, button);
+      return super.onDrag(button);
     }
 
-    final int xPos = getParent().relativeX(x) - relativeX(lastX);
-    final int yPos = getParent().relativeY(y) - relativeY(lastY);
+    // The form's new top left, relative to the parent
+    final int xPos = MalisisGui.MOUSE_POSITION.x() - this.dragOffsetX - parentContainer.screenX();
+    final int yPos = MalisisGui.MOUSE_POSITION.y() - this.dragOffsetY - parentContainer.screenY();
 
-    final int targetX = Math.min(parentContainer.getWidth() - this.width, Math.max(xPos, 0));
-    final int targetY = Math.min(parentContainer.getHeight() - this.height, Math.max(yPos, 0));
-    setPosition(targetX, targetY, Anchor.NONE);
+    final int targetX = Math.min(parentContainer.getWidth() - this.getWidth(), Math.max(xPos, 0));
+    final int targetY = Math.min(parentContainer.getHeight() - this.getHeight(), Math.max(yPos, 0));
+    // Anchor.NONE adds the parent's padding back
+    final Padding padding = Padding.of(parentContainer);
+    setPosition(targetX - padding.left(), targetY - padding.top(), Anchor.NONE);
     return true;
   }
 
-  @Override
-  public BasicForm setSize(final int width, final int height) {
-    super.setSize(width, height);
-
-    if (this.line != null) {
-      this.line.setWidth(this.getWidth() + this.getLeftBorderedPadding() + this.getRightBorderedPadding());
-    }
-
-    if (this.titleContainer != null) {
-      this.titleContainer.setSize(this.getWidth() - this.getRightBorderedPadding(), 15);
-    }
-
-    return this;
-  }
-
-  @SuppressWarnings("unchecked")
   @Subscribe
   public void onButtonClick(final UIButton.ClickEvent event) {
     if ("button.form.close".equals(event.getComponent().getName().toLowerCase())) {
@@ -202,16 +231,5 @@ public class BasicForm extends BasicContainer<BasicForm> {
         }
       }
     }
-  }
-
-  @Override
-  public void drawBackground(final GuiRenderer renderer, final int mouseX, final int mouseY, final float partialTick) {
-    super.drawBackground(renderer, mouseX, mouseY, partialTick);
-  }
-
-  @Override
-  public void drawForeground(final GuiRenderer renderer, final int mouseX, final int mouseY, final float partialTick) {
-    super.drawForeground(renderer, mouseX, mouseY, partialTick);
-    this.closeButton.setFontOptions(this.closeButton.isInsideBounds(mouseX, mouseY) ? FontColors.WHITE_FO : FontColors.GRAY_FO);
   }
 }

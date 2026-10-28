@@ -24,58 +24,80 @@
  */
 package net.malisis.core.client.gui.component.interaction.button;
 
-import net.malisis.core.client.gui.GuiRenderer;
 import net.malisis.core.client.gui.MalisisGui;
+import net.malisis.core.client.gui.component.UIComponent;
 import net.malisis.core.client.gui.component.decoration.UIImage;
 import net.malisis.core.client.gui.component.interaction.UIButton;
+import net.malisis.core.client.gui.text.GuiText;
+import net.malisis.core.renderer.font.FontOptions;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * A {@link UIButton} without its background: only the text or image is drawn.
+ */
 @SideOnly(Side.CLIENT)
 public class BasicSimpleButton extends UIButton {
 
+  private FontOptions textFontOptions = this.fontOptions;
+
+  public BasicSimpleButton() {
+    super();
+    this.setBackground(() -> null);
+  }
+
+  public BasicSimpleButton(final String text) {
+    this();
+    this.setText(text);
+  }
+
+  public BasicSimpleButton(final UIComponent content) {
+    this();
+    this.setContent(content);
+  }
+
+  /**
+   * @deprecated components no longer take their gui, use {@link #BasicSimpleButton()}
+   */
+  @Deprecated
   public BasicSimpleButton(final MalisisGui gui) {
-    super(gui);
+    this();
   }
 
+  /**
+   * @deprecated components no longer take their gui, use {@link #BasicSimpleButton(String)}
+   */
+  @Deprecated
   public BasicSimpleButton(final MalisisGui gui, final String text) {
-    super(gui, text);
+    this(text);
   }
 
+  /**
+   * @deprecated components no longer take their gui, use {@link #BasicSimpleButton(UIComponent)}
+   */
+  @Deprecated
   public BasicSimpleButton(final MalisisGui gui, final UIImage image) {
-    super(gui, image);
-  }
-
-  // Draw nothing to avoid drawing the background images
-  @Override
-  public void drawBackground(final GuiRenderer renderer, final int mouseX, final int mouseY, final float partialTick) {
+    this(image);
   }
 
   @Override
-  public void drawForeground(final GuiRenderer renderer, final int mouseX, final int mouseY, final float partialTicks) {
-    final int w;
-    final int h;
+  public void setText(final String text) {
+    this.setContent(GuiText.of(text, this.textFontOptions));
+  }
 
-    if (this.image != null) {
-      w = this.image.getWidth();
-      h = this.image.getHeight();
-    } else {
-      w = (int) this.font.getStringWidth(this.text, this.fontOptions);
-      h = (int) this.font.getStringHeight(this.fontOptions);
+  /**
+   * Sets the {@link FontOptions} of the text, use {@link FontOptions.FontOptionsBuilder#when} for hovered or disabled variants.
+   *
+   * @param fontOptions the font options
+   */
+  public void setFontOptions(final FontOptions fontOptions) {
+    this.textFontOptions = fontOptions;
+    if (this.content instanceof GuiText) {
+      ((GuiText) this.content).setFontOptions(fontOptions);
     }
+  }
 
-    int x = (this.width - w) / 2;
-    int y = (this.height - h) / 2;
-
-    x += this.offsetX;
-    y += this.offsetY;
-
-    if (this.image != null) {
-      this.image.setPosition(x, y);
-      this.image.setZIndex(this.zIndex);
-      this.image.draw(renderer, mouseX, mouseY, partialTicks);
-    } else {
-      renderer.drawText(this.font, this.text, x, y, this.zIndex, isHovered() ? this.hoveredFontOptions : this.fontOptions);
-    }
+  public FontOptions getFontOptions() {
+    return this.textFontOptions;
   }
 }

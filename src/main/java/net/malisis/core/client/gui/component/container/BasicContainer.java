@@ -28,11 +28,8 @@ import net.malisis.core.client.gui.BasicScreen;
 import net.malisis.core.client.gui.MalisisGui;
 import net.malisis.core.client.gui.component.UIComponent;
 import net.malisis.core.client.gui.component.decoration.UILabel;
-import net.malisis.core.client.gui.component.interaction.BasicTextBox;
-import net.malisis.core.client.gui.component.interaction.UITextField;
+import net.malisis.core.client.gui.component.interaction.BasicTextInput;
 import net.malisis.core.client.gui.element.Padding;
-import net.malisis.core.client.gui.element.position.Position;
-import net.malisis.core.client.gui.element.size.Size;
 import net.malisis.core.client.gui.render.GuiIcon;
 import net.malisis.core.client.gui.render.shape.GuiShape;
 import net.malisis.core.client.gui.render.shape.VertexPosition;
@@ -55,6 +52,8 @@ import java.util.stream.Collectors;
 @SideOnly(Side.CLIENT)
 public class BasicContainer<T extends BasicContainer<T>> extends UIContainer implements ITransformable.Color {
 
+  // ITransformable declares Position and Size types, which hide the GUI classes of the same names: those are fully qualified here
+
   private int topLeftColor = -1;
   private int topRightColor = -1;
   private int bottomLeftColor = -1;
@@ -74,8 +73,8 @@ public class BasicContainer<T extends BasicContainer<T>> extends UIContainer imp
 
   public BasicContainer() {
     final GuiShape center = GuiShape.builder(this)
-      .position(s -> Position.of(() -> this.leftBorderSize, () -> this.topBorderSize))
-      .size(s -> Size.of(() -> this.innerBorderWidth(), () -> this.innerBorderHeight()))
+      .position(s -> net.malisis.core.client.gui.element.position.Position.of(() -> this.leftBorderSize, () -> this.topBorderSize))
+      .size(s -> net.malisis.core.client.gui.element.size.Size.of(() -> this.innerBorderWidth(), () -> this.innerBorderHeight()))
       .color((fp, vp) -> this.cornerColor(vp))
       .alpha((fp, vp) -> this.cornerAlpha(vp))
       .icon(GuiIcon.NONE)
@@ -162,8 +161,8 @@ public class BasicContainer<T extends BasicContainer<T>> extends UIContainer imp
   private GuiShape borderShape(final IntSupplier x, final IntSupplier y,
     final IntSupplier width, final IntSupplier height) {
     return GuiShape.builder(this)
-      .position(s -> Position.of(x, y))
-      .size(s -> Size.of(width, height))
+      .position(s -> net.malisis.core.client.gui.element.position.Position.of(x, y))
+      .size(s -> net.malisis.core.client.gui.element.size.Size.of(width, height))
       .color(() -> this.borderColor)
       .alpha(() -> this.borderAlpha)
       .icon(GuiIcon.NONE)
@@ -480,18 +479,18 @@ public class BasicContainer<T extends BasicContainer<T>> extends UIContainer imp
   }
 
   public void tabToLastControl() {
-    final BasicTextBox currentTextbox =
-      BasicScreen.getFocusedComponent() instanceof BasicTextBox ? ((BasicTextBox) BasicScreen.getFocusedComponent()) : null;
-    BasicTextBox toFocus = null;
+    final BasicTextInput currentTextbox =
+      BasicScreen.getFocusedComponent() instanceof BasicTextInput ? ((BasicTextInput) BasicScreen.getFocusedComponent()) : null;
+    BasicTextInput toFocus = null;
     final int lastTabIndex = currentTextbox == null ? 0 : currentTextbox.getTabIndex();
 
     // Attempt to find the next control in line
-    final List<BasicTextBox> filteredComponents =
-      this.content.components.stream().filter(c -> c.isEnabled() && c.isVisible() && c instanceof BasicTextBox).map(c -> (BasicTextBox) c)
-        .filter(UITextField::isEditable).sorted(Comparator.comparingInt(BasicTextBox::getTabIndex).reversed()).collect(Collectors.toList());
+    final List<BasicTextInput> filteredComponents =
+      this.content.components.stream().filter(c -> c.isEnabled() && c.isVisible() && c instanceof BasicTextInput).map(c -> (BasicTextInput) c)
+        .filter(BasicTextInput::isEditable).sorted(Comparator.comparingInt(BasicTextInput::getTabIndex).reversed()).collect(Collectors.toList());
 
     // Attempt 1: See if we can find an index that is higher than our current
-    for (final BasicTextBox tb : filteredComponents) {
+    for (final BasicTextInput tb : filteredComponents) {
       if (tb == currentTextbox) {
         continue;
       }
@@ -504,7 +503,7 @@ public class BasicContainer<T extends BasicContainer<T>> extends UIContainer imp
 
     // Attempt 2: See if we can find an index with the same value
     if (toFocus == null) {
-      for (final BasicTextBox tb : filteredComponents) {
+      for (final BasicTextInput tb : filteredComponents) {
         if (tb == currentTextbox) {
           continue;
         }
@@ -518,8 +517,8 @@ public class BasicContainer<T extends BasicContainer<T>> extends UIContainer imp
 
     // Attempt 3: We attempt to find the rollover point and start there
     if (toFocus == null) {
-      BasicTextBox highestIndexTextBox = currentTextbox;
-      for (final BasicTextBox tb : filteredComponents) {
+      BasicTextInput highestIndexTextBox = currentTextbox;
+      for (final BasicTextInput tb : filteredComponents) {
 
         if (tb == currentTextbox) {
           continue;
@@ -543,18 +542,18 @@ public class BasicContainer<T extends BasicContainer<T>> extends UIContainer imp
   }
 
   public void tabToNextControl() {
-    final BasicTextBox currentTextbox =
-      BasicScreen.getFocusedComponent() instanceof BasicTextBox ? ((BasicTextBox) BasicScreen.getFocusedComponent()) : null;
-    BasicTextBox toFocus = null;
+    final BasicTextInput currentTextbox =
+      BasicScreen.getFocusedComponent() instanceof BasicTextInput ? ((BasicTextInput) BasicScreen.getFocusedComponent()) : null;
+    BasicTextInput toFocus = null;
     final int lastTabIndex = currentTextbox == null ? 0 : currentTextbox.getTabIndex();
 
     // Attempt to find the next control in line
-    final List<BasicTextBox> filteredComponents =
-      this.content.components.stream().filter(c -> c.isEnabled() && c.isVisible() && c instanceof BasicTextBox).map(c -> (BasicTextBox) c)
-        .filter(UITextField::isEditable).sorted(Comparator.comparingInt(BasicTextBox::getTabIndex)).collect(Collectors.toList());
+    final List<BasicTextInput> filteredComponents =
+      this.content.components.stream().filter(c -> c.isEnabled() && c.isVisible() && c instanceof BasicTextInput).map(c -> (BasicTextInput) c)
+        .filter(BasicTextInput::isEditable).sorted(Comparator.comparingInt(BasicTextInput::getTabIndex)).collect(Collectors.toList());
 
     // Attempt 1: See if we can find an index that is higher than our current
-    for (final BasicTextBox tb : filteredComponents) {
+    for (final BasicTextInput tb : filteredComponents) {
       if (tb == currentTextbox) {
         continue;
       }
@@ -567,7 +566,7 @@ public class BasicContainer<T extends BasicContainer<T>> extends UIContainer imp
 
     // Attempt 2: See if we can find an index with the same value
     if (toFocus == null) {
-      for (final BasicTextBox tb : filteredComponents) {
+      for (final BasicTextInput tb : filteredComponents) {
         if (tb == currentTextbox) {
           continue;
         }
@@ -581,8 +580,8 @@ public class BasicContainer<T extends BasicContainer<T>> extends UIContainer imp
 
     // Attempt 3: We attempt to find the rollover point and start there
     if (toFocus == null) {
-      BasicTextBox lowestIndexTextBox = currentTextbox;
-      for (final BasicTextBox tb : filteredComponents) {
+      BasicTextInput lowestIndexTextBox = currentTextbox;
+      for (final BasicTextInput tb : filteredComponents) {
 
         if (tb == currentTextbox) {
           continue;
