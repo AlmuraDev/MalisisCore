@@ -55,7 +55,7 @@ public class MalisisTab extends CreativeTabs
 	}
 
 	@Override
-	public ItemStack getTabIconItem()
+	public ItemStack createIcon()
 	{
 		if (iconStack == null)
 			iconStack = new ItemStack(item.get());

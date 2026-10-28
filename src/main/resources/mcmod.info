@@ -11,5 +11,6 @@
   "logoFile": "malisiscore.png",
   "parent": "",
   "screenshots": [],
-  "dependencies": [ "MinecraftForge" ]
+  "dependencies": [ "MinecraftForge" ],
+  "requiredMods": ["forge@14.23.5.2768"]
 }]

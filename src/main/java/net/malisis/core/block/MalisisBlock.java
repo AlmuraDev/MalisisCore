@@ -161,19 +161,19 @@ public class MalisisBlock extends Block implements IBoundingBox, IRegisterable<B
 	public MalisisBlock setName(String name)
 	{
 		IRegisterable.super.setName(name);
-		setUnlocalizedName(name);
+		setTranslationKey(name);
 		return this;
 	}
 
-	public String getUnlocalizedName(IBlockState state)
+	public String getTranslationKey(IBlockState state)
 	{
 		for (IBlockComponent component : getBlockComponents())
 		{
-			String name = component.getUnlocalizedName(this, state);
+			String name = component.getTranslationKey(this, state);
 			if (name != null)
 				return name;
 		}
-		return getUnlocalizedName();
+		return getTranslationKey();
 	}
 
 	@Override

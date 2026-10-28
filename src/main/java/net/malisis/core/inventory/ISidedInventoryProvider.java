@@ -127,7 +127,7 @@ public interface ISidedInventoryProvider extends IDirectInventoryProvider, ISide
 	 */
 	public default MalisisInventory getInventory(int slotNumber)
 	{
-		return getInventory(EnumFacing.getFront(slotNumber & 7));
+		return getInventory(EnumFacing.byIndex(slotNumber & 7));
 	}
 
 	@Override

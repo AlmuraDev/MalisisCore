@@ -232,7 +232,7 @@ public class Vertex
 	{
 		if (facing == null)
 			return this;
-		return setNormal(facing.getFrontOffsetX(), facing.getFrontOffsetY(), facing.getFrontOffsetZ());
+		return setNormal(facing.getXOffset(), facing.getYOffset(), facing.getZOffset());
 	}
 
 	public double getU()
@@ -525,7 +525,7 @@ public class Vertex
 
 		if (offset == EnumFacing.WEST || offset == EnumFacing.EAST)
 		{
-			a[0][0] = a[1][0] = a[2][0] = offset.getFrontOffsetX();
+			a[0][0] = a[1][0] = a[2][0] = offset.getXOffset();
 			a[1][1] += Math.round(y * 2 - 1); // -1 if 0, 1 if 1;
 			a[2][1] += Math.round(y * 2 - 1); // -1 if 0, 1 if 1;
 			a[0][2] += Math.round(z * 2 - 1); // -1 if 0, 1 if 1;
@@ -533,7 +533,7 @@ public class Vertex
 		}
 		else if (offset == EnumFacing.UP || offset == EnumFacing.DOWN)
 		{
-			a[0][1] = a[1][1] = a[2][1] = offset.getFrontOffsetY();
+			a[0][1] = a[1][1] = a[2][1] = offset.getYOffset();
 			a[1][0] += Math.round(x * 2 - 1); // -1 if 0, 1 if 1;
 			a[2][0] += Math.round(x * 2 - 1); // -1 if 0, 1 if 1;
 			a[0][2] += Math.round(z * 2 - 1); // -1 if 0, 1 if 1;
@@ -541,7 +541,7 @@ public class Vertex
 		}
 		else if (offset == EnumFacing.NORTH || offset == EnumFacing.SOUTH)
 		{
-			a[0][2] = a[1][2] = a[2][2] = offset.getFrontOffsetZ();
+			a[0][2] = a[1][2] = a[2][2] = offset.getZOffset();
 			a[1][0] += Math.round(x * 2 - 1); // -1 if 0, 1 if 1;
 			a[2][0] += Math.round(x * 2 - 1); // -1 if 0, 1 if 1;
 			a[0][1] += Math.round(y * 2 - 1); // -1 if 0, 1 if 1;

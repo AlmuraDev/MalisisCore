@@ -130,7 +130,7 @@ public class Utils
 	{
 		ResourceLocation rl = Utils.getResourceLocation(name);
 		String mod = Loader.instance().activeModContainer().getModId();
-		if (rl.getResourceDomain() == mod.toLowerCase())
+		if (rl.getNamespace() == mod.toLowerCase())
 			MalisisCore.log.warn("Setting registry name {} for already active container {}. Use setRegistryName() instead.", rl, mod);
 		try
 		{

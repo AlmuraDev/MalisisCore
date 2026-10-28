@@ -1,6 +1,7 @@
 # Source language and JDK version to use
 language: java
 jdk: oraclejdk8
+dist: trusty
 
 # Compile and package JAR and set build properties
 install: ./gradlew setupCIWorkspace
@@ -10,7 +11,7 @@ script: ./gradlew build -PbuildNumber=$TRAVIS_BUILD_NUMBER -PciSystem=travis -Pc
 after_success:
   # Check if commit s not a pull request, if git repo is official, and if branch is 1.7. If checks pass, add libs and deploy artifacts to Maven repository.
   #- "[[ $TRAVIS_PULL_REQUEST == false ]] && [[ $TRAVIS_REPO_SLUG == Ordinastie/MalisisCore ]] && [[ $TRAVIS_BRANCH == 1.8.9]] && ./gradlew uploadArchives"
-  - "[[ $TRAVIS_PULL_REQUEST == false ]] && [[ $TRAVIS_REPO_SLUG == Ordinastie/MalisisCore ]] && ./gradlew uploadArchives"
+  - '[[ $TRAVIS_PULL_REQUEST == false ]] && [[ $TRAVIS_REPO_SLUG == AlmuraDev/MalisisCore ]] && ./gradlew -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" uploadArchives'
 
 # Notification services
 notifications:

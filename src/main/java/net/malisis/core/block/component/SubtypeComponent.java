@@ -73,9 +73,9 @@ public class SubtypeComponent<T extends Enum<T> & IStringSerializable> implement
 	}
 
 	@Override
-	public String getUnlocalizedName(Block block, IBlockState state)
+	public String getTranslationKey(Block block, IBlockState state)
 	{
-		return block.getUnlocalizedName() + "." + state.getValue(getProperty()).getName();
+		return block.getTranslationKey() + "." + state.getValue(getProperty()).getName();
 	}
 
 	@Override

@@ -108,18 +108,18 @@ public class MalisisModel implements ITransformable.Translate, ITransformable.Ro
 
 		IModelLoader loader = null;
 		IAnimationLoader animLoader = null;
-		if (resource.getResourcePath().endsWith(".obj"))
+		if (resource.getNamespace().endsWith(".obj"))
 		{
 			loader = new ObjFileImporter(resource);
 			animLoader = new AnimationImporter(new ResourceLocation(resource.toString() + ".anim"));
 		}
-		if (resource.getResourcePath().endsWith(".png"))
+		if (resource.getPath().endsWith(".png"))
 			loader = new TextureModelLoader(resource);
 
 		if (loader != null)
 			load(loader);
 		else
-			MalisisCore.log.error("[MalisisModel] No loader determined for {}.", resource.getResourcePath());
+			MalisisCore.log.error("[MalisisModel] No loader determined for {}.", resource.getPath());
 
 		if (animLoader != null)
 			load(animLoader);

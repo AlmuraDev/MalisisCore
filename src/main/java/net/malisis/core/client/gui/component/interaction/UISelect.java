@@ -155,10 +155,10 @@ public class UISelect<T> extends UIComponent
 		this.stringFunction = checkNotNull(stringFunction);
 	}
 
-	@SuppressWarnings("unchecked")
 	public <U extends UIComponent & IOptionComponent> void setComponentFactory(Function<T, U> factory)
 	{
-		optionsContainer.setComponentFactory((Function<T, UIComponent>) factory);
+		//javac rejects casting Function<T, U> to Function<T, UIComponent> (Eclipse allows it)
+		optionsContainer.setComponentFactory(factory::apply);
 	}
 
 	//#end Getters/Setters

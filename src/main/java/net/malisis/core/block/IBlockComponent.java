@@ -100,7 +100,7 @@ public interface IBlockComponent extends IComponent
 	 * @param state the state
 	 * @return the unlocalized name
 	 */
-	public default String getUnlocalizedName(Block block, IBlockState state)
+	public default String getTranslationKey(Block block, IBlockState state)
 	{
 		return null;
 	}

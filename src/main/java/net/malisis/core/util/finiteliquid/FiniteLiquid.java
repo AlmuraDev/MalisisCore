@@ -168,7 +168,7 @@ public abstract class FiniteLiquid extends MalisisBlock
 	public boolean shouldSideBeRendered(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side)
 	{
 		Material material = world.getBlockState(pos.offset(side)).getMaterial();
-		return material == this.blockMaterial ? false : (side == UP ? true : super.shouldSideBeRendered(state, world, pos, side));
+		return material == this.material ? false : (side == UP ? true : super.shouldSideBeRendered(state, world, pos, side));
 	}
 
 	@Override

@@ -104,7 +104,7 @@ public class SidesIconProvider implements ISidesIconProvider
 		for (int i = 0; i < names.length; i++)
 		{
 			if (!StringUtils.isEmpty(names[i]))
-				setSideIcon(EnumFacing.getFront(i), Icon.from(names[i]));
+				setSideIcon(EnumFacing.byIndex(i), Icon.from(names[i]));
 		}
 	}
 
@@ -120,7 +120,7 @@ public class SidesIconProvider implements ISidesIconProvider
 		for (int i = 0; i < icons.length; i++)
 		{
 			if (icons[i] != null)
-				setSideIcon(EnumFacing.getFront(i), icons[i]);
+				setSideIcon(EnumFacing.byIndex(i), icons[i]);
 		}
 	}
 

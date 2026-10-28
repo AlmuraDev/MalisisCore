@@ -90,9 +90,9 @@ public class SlabComponent implements IBlockComponent, IMergedBlock, ISmartCull
 	@Override
 	public IBlockState mergeBlock(World world, BlockPos pos, IBlockState state, ItemStack itemStack, EntityPlayer player, EnumFacing side, float hitX, float hitY, float hitZ)
 	{
-		int x = (int) Math.floor(hitX + side.getFrontOffsetX() * 0.4F);
-		int y = (int) Math.floor(hitY + side.getFrontOffsetY() * 0.4F);
-		int z = (int) Math.floor(hitZ + side.getFrontOffsetZ() * 0.4F);
+		int x = (int) Math.floor(hitX + side.getXOffset() * 0.4F);
+		int y = (int) Math.floor(hitY + side.getYOffset() * 0.4F);
+		int z = (int) Math.floor(hitZ + side.getZOffset() * 0.4F);
 		BlockPos hitPos = new BlockPos(pos).add(x, y, z);
 		return hitPos.equals(pos) ? state.withProperty(TOP, true).withProperty(BOTTOM, true) : null;
 	}

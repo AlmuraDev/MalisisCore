@@ -158,9 +158,9 @@ public class DirectionalComponent implements IBlockComponent
 	{
 		EnumFacing facing = null;
 		if (getProperty() == HORIZONTAL)
-			facing = EnumFacing.getHorizontal(meta & 3);
+			facing = EnumFacing.byHorizontalIndex(meta & 3);
 		else
-			facing = EnumFacing.getFront(meta & 7);
+			facing = EnumFacing.byIndex(meta & 7);
 		return state.withProperty(getProperty(), facing);
 	}
 

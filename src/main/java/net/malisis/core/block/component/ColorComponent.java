@@ -102,9 +102,9 @@ public class ColorComponent extends SubtypeComponent<EnumDyeColor> implements IR
 	}
 
 	@Override
-	public String getUnlocalizedName(Block block, IBlockState state)
+	public String getTranslationKey(Block block, IBlockState state)
 	{
-		return block.getUnlocalizedName() + "." + getColor(state).getUnlocalizedName();
+		return block.getTranslationKey() + "." + getColor(state).getTranslationKey();
 	}
 
 	@Override

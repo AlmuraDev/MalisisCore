@@ -57,7 +57,7 @@ public class MalisisItem extends Item implements IComponentProvider, IRegisterab
 	public MalisisItem setName(String name)
 	{
 		IRegisterable.super.setName(name);
-		setUnlocalizedName(name);
+		setTranslationKey(name);
 		return this;
 	}
 

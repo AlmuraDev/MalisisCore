@@ -239,9 +239,9 @@ public class MBlockPos
 	 */
 	public MBlockPos offset(EnumFacing facing, int n)
 	{
-		return new MBlockPos(	this.getX() + facing.getFrontOffsetX() * n,
-								this.getY() + facing.getFrontOffsetY() * n,
-								this.getZ() + facing.getFrontOffsetZ() * n);
+		return new MBlockPos(	this.getX() + facing.getXOffset() * n,
+								this.getY() + facing.getYOffset() * n,
+								this.getZ() + facing.getZOffset() * n);
 	}
 
 	//#end Moves

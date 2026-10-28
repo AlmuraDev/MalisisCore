@@ -353,6 +353,6 @@ public class ItemUtils
 		if (itemStack == ItemStack.EMPTY)
 			return "Empty";
 
-		return itemStack.getCount() + "x" + itemStack.item.getUnlocalizedName() + "@" + itemStack.getItemDamage();
+		return itemStack.getCount() + "x" + itemStack.item.getTranslationKey() + "@" + itemStack.getItemDamage();
 	}
 }

@@ -77,9 +77,9 @@ public class MalisisItemBlock extends ItemBlock implements IRegisterable<Item>, 
 	}
 
 	@Override
-	public String getUnlocalizedName(ItemStack itemStack)
+	public String getTranslationKey(ItemStack itemStack)
 	{
-		return block().getUnlocalizedName(block().getStateFromItemStack(itemStack));
+		return block().getTranslationKey(block().getStateFromItemStack(itemStack));
 	}
 
 	@Override
@@ -105,9 +105,9 @@ public class MalisisItemBlock extends ItemBlock implements IRegisterable<Item>, 
 		if (placedState == null)
 		{
 			p = pos.offset(side);
-			float x = hitX - side.getFrontOffsetX();
-			float y = hitY - side.getFrontOffsetY();
-			float z = hitZ - side.getFrontOffsetZ();
+			float x = hitX - side.getXOffset();
+			float y = hitY - side.getYOffset();
+			float z = hitZ - side.getZOffset();
 			//check for merge at the new position too
 			placedState = checkMerge(itemStack, player, world, p, side, x, y, z);
 		}

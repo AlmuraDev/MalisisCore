@@ -189,7 +189,7 @@ public class TextureModelLoader implements IModelLoader
 
 	private boolean isPixelTransparent(EnumFacing facing, int x, int y)
 	{
-		return isPixelTransparent(x + facing.getFrontOffsetX(), y - facing.getFrontOffsetY());
+		return isPixelTransparent(x + facing.getXOffset(), y - facing.getYOffset());
 	}
 
 	@Override

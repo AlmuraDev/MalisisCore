@@ -255,7 +255,7 @@ public class ChunkBlockHandler
 	@SubscribeEvent
 	public void onChunkWatched(ChunkWatchEvent.Watch event)
 	{
-		Chunk chunk = event.getPlayer().world.getChunkFromChunkCoords(event.getChunk().x, event.getChunk().z);
+		Chunk chunk = event.getPlayer().world.getChunk(event.getChunk().x, event.getChunk().z);
 		Set<BlockPos> coords = chunks(chunk).get(chunk);
 		if (!coords.isEmpty())
 			ChunkBlockMessage.sendCoords(chunk, coords, event.getPlayer());
@@ -271,7 +271,7 @@ public class ChunkBlockHandler
 	 */
 	public void setCoords(int chunkX, int chunkZ, Set<BlockPos> coords)
 	{
-		Chunk chunk = Utils.getClientWorld().getChunkFromChunkCoords(chunkX, chunkZ);
+		Chunk chunk = Utils.getClientWorld().getChunk(chunkX, chunkZ);
 		chunks(chunk).addAll(chunk, coords);
 	}
 
@@ -316,7 +316,7 @@ public class ChunkBlockHandler
 				for (int cz = (int) Math.floor(aabb.minZ) >> 4; cz <= (int) Math.ceil(aabb.maxZ) >> 4; cz++)
 				{
 					if (world.getChunkProvider() != null && world.getChunkProvider().getLoadedChunk(cx, cz) != null)
-						chunks.add(world.getChunkFromChunkCoords(cx, cz));
+						chunks.add(world.getChunk(cx, cz));
 				}
 			}
 		}

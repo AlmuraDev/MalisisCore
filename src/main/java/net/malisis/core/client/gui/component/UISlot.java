@@ -117,7 +117,7 @@ public class UISlot extends UIComponent
 		//		for (int i = 1; i < lines.size(); i++)
 		//			lines.set(i, TextFormatting.GRAY + lines.get(i));
 
-		tooltip = new UITooltip(slot.getItemStack().getRarity().rarityColor + text);
+		tooltip = new UITooltip(slot.getItemStack().getRarity().color + text);
 	}
 
 	public void drawForeground(GuiRenderer renderer)

@@ -100,7 +100,7 @@ public interface IRegisterable<T>
 
 		Item item = new ItemBlock(block);
 		ResourceLocation rl = block.getRegistryName();
-		if (rl.getResourceDomain().equals("minecraft"))
+		if (rl.getNamespace().equals("minecraft"))
 			Utils.silentRegistryName(item, rl.toString());
 		else
 			item.setRegistryName(block.getRegistryName());

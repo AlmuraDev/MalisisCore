@@ -89,7 +89,7 @@ public class ClientNotificationManager
 		if (!needsNotification(state.getBlock()))
 			return;
 
-		updatedPos.add(world.getChunkFromBlockCoords(pos), Triple.of(pos, neighborBlock, neighborPos));
+		updatedPos.add(world.getChunk(pos), Triple.of(pos, neighborBlock, neighborPos));
 		//NeighborChangedMessage.send(world, pos, neighbor);
 	}
 

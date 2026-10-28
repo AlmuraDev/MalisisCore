@@ -131,7 +131,7 @@ public class BlockDataHandler
 	 */
 	private <T> ChunkData<T> chunkData(String identifier, World world, BlockPos pos)
 	{
-		return world != null ? chunkData(identifier, world, world.getChunkFromBlockCoords(pos)) : null;
+		return world != null ? chunkData(identifier, world, world.getChunk(pos)) : null;
 	}
 
 	/**
@@ -163,7 +163,7 @@ public class BlockDataHandler
 	@SuppressWarnings("unchecked")
 	private <T> ChunkData<T> createChunkData(String identifier, World world, BlockPos pos)
 	{
-		Chunk chunk = world.getChunkFromBlockCoords(pos);
+		Chunk chunk = world.getChunk(pos);
 
 		//System.out.println("createChunkData (" + chunk.xPosition + "/" + chunk.zPosition + ") for " + identifier);
 
@@ -254,7 +254,7 @@ public class BlockDataHandler
 	@SubscribeEvent
 	public void onChunkWatched(ChunkWatchEvent.Watch event)
 	{
-		Chunk chunk = event.getPlayer().world.getChunkFromChunkCoords(event.getChunk().x, event.getChunk().z);
+		Chunk chunk = event.getPlayer().world.getChunk(event.getChunk().x, event.getChunk().z);
 		for (HandlerInfo<?> handlerInfo : handlerInfos.values())
 		{
 			ChunkData<?> chunkData = instance.chunkData(handlerInfo.identifier, chunk.getWorld(), chunk);
@@ -379,7 +379,7 @@ public class BlockDataHandler
 			return;
 
 		//MalisisCore.message("Received blockData (" + chunkX + "/" + chunkZ + ") for " + identifier);
-		Chunk chunk = Utils.getClientWorld().getChunkFromChunkCoords(chunkX, chunkZ);
+		Chunk chunk = Utils.getClientWorld().getChunk(chunkX, chunkZ);
 		ChunkData<?> chunkData = new ChunkData<>(handlerInfo).fromBytes(data);
 		datas.get().put(handlerInfo.identifier, chunk, chunkData);
 	}
