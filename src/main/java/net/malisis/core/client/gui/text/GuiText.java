@@ -312,9 +312,9 @@ public class GuiText implements IGuiRenderer, IContent, IChild<UIComponent>
 	private String resolveParameter(String key)
 	{
 		ICachedData<?> o = parameters.get(key);
-		if (o == null) //not actual parameter : translate it
-			return translated ? I18n.format(key) : key;
-		return Objects.toString(o.get()).replace("$", "\\$");
+		if (o == null) //not actual parameter : translate it, or keep it as written (with its braces) when not translated
+			return translated ? I18n.format(key) : "{" + key + "}";
+		return Objects.toString(o.get());
 	}
 
 	/**
@@ -399,7 +399,7 @@ public class GuiText implements IGuiRenderer, IContent, IChild<UIComponent>
 		Matcher matcher = pattern.matcher(str);
 		StringBuffer sb = new StringBuffer();
 		while (matcher.find())
-			matcher.appendReplacement(sb, resolveParameter(matcher.group("key")));
+			matcher.appendReplacement(sb, Matcher.quoteReplacement(resolveParameter(matcher.group("key"))));
 		matcher.appendTail(sb);
 		str = sb.toString();
 		return translated ? I18n.format(str) : str;

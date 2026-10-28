@@ -116,7 +116,7 @@ public class UITextField extends UIComponent implements IContentHolder, IClipabl
 								.text(this::getText)
 								.multiLine(multiLine)
 								.translated(false)
-								.literal(true)
+								.literal(false) //formatting codes applied and hidden, as in 6.5.x
 								.position(3, 3)
 								.fontOptions(FontOptions.builder().color(0xFFFFFF).shadow().build())
 								.build();
