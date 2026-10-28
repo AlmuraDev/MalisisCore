@@ -39,7 +39,6 @@ import javax.annotation.Nullable;
 @SideOnly(Side.CLIENT)
 public class UISliderBuilder {
 
-  private final MalisisGui gui;
   @Nullable private UIContainer container;
   @Nullable private FontOptions fontOptions;
   private FontOptions hoverFontOptions;
@@ -53,8 +52,15 @@ public class UISliderBuilder {
   private float scrollStep;
   private boolean enabled = true;
 
+  public UISliderBuilder(@Nullable final Converter converter) {
+    this.converter = converter;
+  }
+
+  /**
+   * @deprecated components no longer take their gui, use {@link #UISliderBuilder(Converter)}
+   */
+  @Deprecated
   public UISliderBuilder(final MalisisGui gui, @Nullable final Converter converter) {
-    this.gui = gui;
     this.converter = converter;
   }
 
@@ -64,7 +70,7 @@ public class UISliderBuilder {
   }
 
   public UISliderBuilder tooltip(final String text) {
-    return this.tooltip(new UITooltip(this.gui, text, 15));
+    return this.tooltip(new UITooltip(text, 15));
   }
 
   public UISliderBuilder tooltip(final UITooltip tooltip) {
@@ -156,7 +162,7 @@ public class UISliderBuilder {
 
   @SuppressWarnings("unchecked")
   public UISlider build(final String id) {
-    final UISlider slider = new UISlider(this.gui, this.width, this.converter, this.text);
+    final UISlider slider = new UISlider(this.width, this.converter, this.text);
     slider.setPosition(this.x, this.y);
     if (id != null) {
       slider.setName(id);
@@ -176,14 +182,12 @@ public class UISliderBuilder {
     if (this.object != null) {
       slider.register(this.object);
     }
-    if (this.fontOptions != null) {
-      slider.setFontOptions(this.fontOptions);
+    if (this.fontOptions != null || this.font != null) {
+      final FontOptions options = this.fontOptions != null ? this.fontOptions : slider.content().getFontOptions();
+      slider.setFontOptions(this.font != null ? options.toBuilder().font(this.font).build() : options);
     }
     if (this.hoverFontOptions != null) {
-      slider.setHoveredFontOptions(this.hoverFontOptions);
-    }
-    if (this.font != null) {
-      slider.setFont(this.font);
+      slider.setHoveredFontOptions(this.font != null ? this.hoverFontOptions.toBuilder().font(this.font).build() : this.hoverFontOptions);
     }
     if (this.container != null) {
       this.container.add(slider);

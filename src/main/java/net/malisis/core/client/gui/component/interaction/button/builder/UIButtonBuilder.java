@@ -26,7 +26,7 @@ package net.malisis.core.client.gui.component.interaction.button.builder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import net.malisis.core.client.gui.GuiTexture;
+import net.malisis.core.client.gui.render.GuiTexture;
 import net.malisis.core.client.gui.MalisisGui;
 import net.malisis.core.client.gui.component.container.UIContainer;
 import net.malisis.core.client.gui.component.decoration.UIImage;
@@ -34,7 +34,7 @@ import net.malisis.core.client.gui.component.decoration.UITooltip;
 import net.malisis.core.client.gui.component.interaction.UIButton;
 import net.malisis.core.renderer.font.FontOptions;
 import net.malisis.core.renderer.font.MalisisFont;
-import net.malisis.core.renderer.icon.GuiIcon;
+import net.malisis.core.client.gui.render.GuiIcon;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -43,7 +43,6 @@ import javax.annotation.Nullable;
 @SideOnly(Side.CLIENT)
 public final class UIButtonBuilder {
 
-  private final MalisisGui gui;
   @Nullable private UIContainer container;
   @Nullable private FontOptions fontOptions;
   @Nullable private FontOptions hoverFontOptions;
@@ -57,8 +56,14 @@ public final class UIButtonBuilder {
   private boolean enabled = true;
   private boolean visible = true;
 
+  public UIButtonBuilder() {
+  }
+
+  /**
+   * @deprecated components no longer take their gui, use {@link #UIButtonBuilder()}
+   */
+  @Deprecated
   public UIButtonBuilder(final MalisisGui gui) {
-    this.gui = gui;
   }
 
   public UIButtonBuilder text(final String text) {
@@ -67,7 +72,7 @@ public final class UIButtonBuilder {
   }
 
   public UIButtonBuilder tooltip(final String text) {
-    return this.tooltip(new UITooltip(this.gui, text, 15));
+    return this.tooltip(new UITooltip(text, 15));
   }
 
   public UIButtonBuilder tooltip(final UITooltip tooltip) {
@@ -81,11 +86,11 @@ public final class UIButtonBuilder {
   }
 
   public UIButtonBuilder icon(final GuiIcon icon) {
-    return this.image(new UIImage(this.gui, null, icon));
+    return this.image(new UIImage(icon));
   }
 
   public UIButtonBuilder texture(final GuiTexture texture) {
-    return this.image(new UIImage(this.gui, texture, null));
+    return this.image(new UIImage(new GuiIcon(texture, 0F, 0F, 1F, 1F)));
   }
 
   public UIButtonBuilder size(final int width, final int height) {
@@ -184,7 +189,7 @@ public final class UIButtonBuilder {
   public UIButton build(final String id) {
     checkNotNull(id);
 
-    final UIButton button = new UIButton(this.gui);
+    final UIButton button = new UIButton();
     button.setPosition(this.x, this.y);
     button.setName(id);
 
@@ -195,7 +200,7 @@ public final class UIButtonBuilder {
       button.setFontOptions(this.fontOptions);
     }
     if (this.image != null) {
-      button.setImage(this.image);
+      button.setContent(this.image);
     }
     if (this.tooltip != null) {
       button.setTooltip(this.tooltip);
@@ -216,7 +221,8 @@ public final class UIButtonBuilder {
       button.setHoveredFontOptions(this.hoverFontOptions);
     }
     if (this.font != null) {
-      button.setFont(this.font);
+      button.setFontOptions(button.getFontOptions().toBuilder().font(this.font).build());
+      button.setHoveredFontOptions(button.getHoveredFontOptions().toBuilder().font(this.font).build());
     }
     if (this.container != null) {
       this.container.add(button);
