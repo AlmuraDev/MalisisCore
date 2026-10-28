@@ -508,6 +508,16 @@ public abstract class MalisisGui extends GuiScreen
 	}
 
 	/**
+	 * Whether keys typed are offered to the hovered component when the focused one doesn't use them.
+	 *
+	 * @return true by default
+	 */
+	protected boolean sendKeysToHoveredComponent()
+	{
+		return true;
+	}
+
+	/**
 	 * Called when a key is pressed on the keyboard.
 	 */
 	@Override
@@ -525,7 +535,8 @@ public abstract class MalisisGui extends GuiScreen
 			if (focusedComponent != null && !keyListeners.contains(focusedComponent) && focusedComponent.onKeyTyped(keyChar, keyCode))
 				return;
 
-			if (hoveredComponent != null && !keyListeners.contains(hoveredComponent) && hoveredComponent.onKeyTyped(keyChar, keyCode))
+			if (sendKeysToHoveredComponent() && hoveredComponent != null && !keyListeners.contains(hoveredComponent)
+					&& hoveredComponent.onKeyTyped(keyChar, keyCode))
 				return;
 
 			if (isGuiCloseKey(keyCode) && mc.currentScreen == this)

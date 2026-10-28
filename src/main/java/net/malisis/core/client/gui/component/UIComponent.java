@@ -35,6 +35,7 @@ import javax.annotation.Nonnull;
 import com.google.common.eventbus.EventBus;
 
 import net.malisis.core.ExceptionHandler;
+import net.malisis.core.client.gui.Anchor;
 import net.malisis.core.client.gui.MalisisGui;
 import net.malisis.core.client.gui.component.container.UIContainer;
 import net.malisis.core.client.gui.component.content.IContent;
@@ -47,9 +48,11 @@ import net.malisis.core.client.gui.element.IKeyListener;
 import net.malisis.core.client.gui.element.IOffset;
 import net.malisis.core.client.gui.element.Padding;
 import net.malisis.core.client.gui.element.Padding.IPadded;
+import net.malisis.core.client.gui.element.position.AnchoredPosition;
 import net.malisis.core.client.gui.element.position.Position;
 import net.malisis.core.client.gui.element.position.Position.IPosition;
 import net.malisis.core.client.gui.element.position.Position.ScreenPosition;
+import net.malisis.core.client.gui.element.size.RelativeSize;
 import net.malisis.core.client.gui.element.size.Size;
 import net.malisis.core.client.gui.element.size.Sizes;
 import net.malisis.core.client.gui.element.size.Size.ISize;
@@ -201,6 +204,132 @@ public abstract class UIComponent implements IContent, IGuiRenderer, IKeyListene
 	{
 		return innerSize;
 	}
+
+	// #region 6.5.x compatibility
+	// Anchor/int based positions and sizes from the 6.5.x GUI API, mapped onto IPosition/ISize. They return this, typed by the caller.
+
+	/**
+	 * Sets the position of this {@link UIComponent}, keeping its current {@link Anchor}.
+	 *
+	 * @param x the x offset
+	 * @param y the y offset
+	 * @return this component
+	 */
+	public <T extends UIComponent> T setPosition(int x, int y)
+	{
+		return setPosition(x, y, getAnchor());
+	}
+
+	/**
+	 * Sets the position of this {@link UIComponent} as an offset from an {@link Anchor} of its parent (see {@link AnchoredPosition}).
+	 *
+	 * @param x the x offset
+	 * @param y the y offset
+	 * @param anchor the anchor
+	 * @return this component
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends UIComponent> T setPosition(int x, int y, int anchor)
+	{
+		setPosition(new AnchoredPosition(this, x, y, anchor));
+		return (T) this;
+	}
+
+	/**
+	 * Changes the {@link Anchor} of this {@link UIComponent}, keeping its offsets.
+	 *
+	 * @param anchor the anchor
+	 * @return this component
+	 */
+	public <T extends UIComponent> T setAnchor(int anchor)
+	{
+		return setPosition(getX(), getY(), anchor);
+	}
+
+	/**
+	 * Gets the x offset of this {@link UIComponent}: the offset from its anchor if positioned with one, its x position otherwise.
+	 *
+	 * @return the x
+	 */
+	public int getX()
+	{
+		return position instanceof AnchoredPosition ? ((AnchoredPosition) position).rawX() : position.x();
+	}
+
+	/**
+	 * Gets the y offset of this {@link UIComponent}: the offset from its anchor if positioned with one, its y position otherwise.
+	 *
+	 * @return the y
+	 */
+	public int getY()
+	{
+		return position instanceof AnchoredPosition ? ((AnchoredPosition) position).rawY() : position.y();
+	}
+
+	/**
+	 * Gets the {@link Anchor} of this {@link UIComponent}, {@link Anchor#NONE} if not positioned with one.
+	 *
+	 * @return the anchor
+	 */
+	public int getAnchor()
+	{
+		return position instanceof AnchoredPosition ? ((AnchoredPosition) position).anchor() : Anchor.NONE;
+	}
+
+	/**
+	 * Sets the size of this {@link UIComponent}. Zero or less is relative to the parent (see {@link RelativeSize}).
+	 *
+	 * @param width the width
+	 * @param height the height
+	 * @return this component
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends UIComponent> T setSize(int width, int height)
+	{
+		setSize(new RelativeSize(this, width, height));
+		return (T) this;
+	}
+
+	public int getWidth()
+	{
+		return size().width();
+	}
+
+	public int getHeight()
+	{
+		return size().height();
+	}
+
+	/**
+	 * Gets the width as given to {@link #setSize(int, int)}: zero or less is relative to the parent.
+	 *
+	 * @return the raw width
+	 */
+	public int getRawWidth()
+	{
+		return size instanceof RelativeSize ? ((RelativeSize) size).rawWidth() : size.width();
+	}
+
+	/**
+	 * Gets the height as given to {@link #setSize(int, int)}: zero or less is relative to the parent.
+	 *
+	 * @return the raw height
+	 */
+	public int getRawHeight()
+	{
+		return size instanceof RelativeSize ? ((RelativeSize) size).rawHeight() : size.height();
+	}
+
+	public int screenX()
+	{
+		return screenPosition().x();
+	}
+
+	public int screenY()
+	{
+		return screenPosition().y();
+	}
+	// #end 6.5.x compatibility
 
 	/**
 	 * Sets the zIndex for this {@link UIComponent}.
