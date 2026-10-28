@@ -30,6 +30,12 @@ import org.lwjgl.opengl.GL11;
 import net.malisis.core.client.gui.MalisisGui;
 import net.malisis.core.client.gui.component.UIComponent;
 import net.malisis.core.client.gui.element.IClipable.ClipArea;
+import net.malisis.core.client.gui.element.position.Position;
+import net.malisis.core.client.gui.element.size.Size;
+import net.malisis.core.client.gui.render.shape.GuiShape;
+import net.malisis.core.client.gui.text.GuiText;
+import net.malisis.core.renderer.font.FontOptions;
+import net.malisis.core.renderer.font.MalisisFont;
 import net.malisis.core.util.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -328,28 +334,42 @@ public class GuiRenderer
 	 */
 	public void drawRectangle(int x, int y, int z, int width, int height, int color, int alpha, boolean relative)
 	{
-		//		if (relative && currentComponent != null)
-		//		{
-		//			x += currentComponent.screenX();
-		//			y += currentComponent.screenY();
-		//			z += currentComponent.getZIndex();
-		//		}
-		//
-		//		rectangle.resetState();
-		//		rectangle.setSize(width, height);
-		//		rectangle.setPosition(x, y);
-		//		rectangle.getFaces()[0].getParameters().colorMultiplier.set(color);
-		//		rectangle.getFaces()[0].getParameters().alpha.set(alpha);
-		//
-		//		GlStateManager.pushMatrix();
-		//		GlStateManager.translate(0, 0, z);
-		//		disableTextures();
-		//
-		//		drawShape(rectangle);
-		//		next();
-		//		enableTextures();
-		//
-		//		GlStateManager.popMatrix();
+		if (relative && currentComponent != null)
+		{
+			x += currentComponent.screenPosition().x();
+			y += currentComponent.screenPosition().y();
+			z += currentComponent.getZIndex();
+		}
+
+		GuiShape.builder().zIndex(z).color(color).alpha(alpha).icon(GuiIcon.NONE).build().render(this, Position.of(x, y), Size.of(width, height));
+	}
+
+	/**
+	 * Draws a text in the GUI at a position relative to {@link #currentComponent}. The text is drawn as is (not translated, no
+	 * parameters).
+	 *
+	 * @param font the font, null for the font of the options
+	 * @param text the text
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param fontOptions the font options
+	 */
+	public void drawText(MalisisFont font, String text, int x, int y, int z, FontOptions fontOptions)
+	{
+		if (Strings.isEmpty(text))
+			return;
+
+		if (currentComponent != null)
+		{
+			x += currentComponent.screenPosition().x();
+			y += currentComponent.screenPosition().y();
+			z += currentComponent.getZIndex();
+		}
+		if (font != null && font != fontOptions.getFont())
+			fontOptions = fontOptions.toBuilder().font(font).build();
+
+		GuiText.builder().text(text).translated(false).literal(true).fontOptions(fontOptions).position(x, y).zIndex(z).build().render(this);
 	}
 
 	/**
