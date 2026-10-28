@@ -340,7 +340,7 @@ public class GuiShape implements IGuiRenderer, IPositioned, ISized, IChild<UICom
 				icon(GuiIcon.NONE);
 
 			this.color = colorFunction(this.color);
-			this.alpha = colorFunction(this.alpha);
+			this.alpha = alphaFunction(this.alpha);
 
 			return this;
 		}
@@ -350,18 +350,19 @@ public class GuiShape implements IGuiRenderer, IPositioned, ISized, IChild<UICom
 			return border(size, color, 255);
 		}
 
+		//the center keeps the base color/alpha (white/opaque when none was set), the border faces use the border's
 		private ToIntBiFunction<FacePosition, VertexPosition> colorFunction(ToIntBiFunction<FacePosition, VertexPosition> color)
 		{
 			if (borderSize == 0)
 				return color;
-			return (fp, vp) -> fp != FacePosition.CENTER ? borderColor : color.applyAsInt(fp, vp);
+			return (fp, vp) -> fp != FacePosition.CENTER ? borderColor : color != null ? color.applyAsInt(fp, vp) : 0xFFFFFF;
 		}
 
 		private ToIntBiFunction<FacePosition, VertexPosition> alphaFunction(ToIntBiFunction<FacePosition, VertexPosition> alpha)
 		{
 			if (borderSize == 0)
 				return alpha;
-			return (fp, vp) -> fp != FacePosition.CENTER ? borderAlpha : alpha.applyAsInt(fp, vp);
+			return (fp, vp) -> fp != FacePosition.CENTER ? borderAlpha : alpha != null ? alpha.applyAsInt(fp, vp) : 255;
 		}
 
 		public Builder icon(GuiIcon i)

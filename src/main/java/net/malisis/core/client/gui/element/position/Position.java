@@ -254,12 +254,12 @@ public class Position
 	 */
 	public static IPosition topLeft(IChild<?> owner)
 	{
-		return of(topAligned(owner, 0), leftAligned(owner, 0));
+		return of(leftAligned(owner, 0), topAligned(owner, 0));
 	}
 
 	public static <T extends ISized & IChild<U>, U extends ISized> IPosition topCenter(T owner)
 	{
-		return of(topAligned(owner, 0), centered(owner, 0));
+		return of(centered(owner, 0), topAligned(owner, 0));
 	}
 
 	public static <T extends ISized & IChild<U>, U extends ISized> IPosition topRight(T owner)
