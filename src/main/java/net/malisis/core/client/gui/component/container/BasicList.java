@@ -24,18 +24,18 @@
  */
 package net.malisis.core.client.gui.component.container;
 
-import net.malisis.core.util.MathUtil;
-import net.malisis.core.util.TriFunction;
-import net.malisis.core.client.gui.ClipArea;
-import net.malisis.core.client.gui.GuiRenderer;
 import net.malisis.core.client.gui.MalisisGui;
 import net.malisis.core.client.gui.component.UIComponent;
-import net.malisis.core.client.gui.component.control.UIScrollBar;
-import net.malisis.core.client.gui.component.control.UISlimScrollbar;
+import net.malisis.core.client.gui.component.decoration.UILabel;
+import net.malisis.core.client.gui.component.scrolling.UIScrollBar;
+import net.malisis.core.client.gui.component.scrolling.UISlimScrollbar;
 import net.malisis.core.client.gui.event.ComponentEvent;
+import net.malisis.core.client.gui.render.GuiRenderer;
+import net.malisis.core.util.FontColors;
+import net.malisis.core.util.MathUtil;
 import net.malisis.core.util.MouseButton;
+import net.malisis.core.util.TriFunction;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -59,13 +59,21 @@ public class BasicList<T> extends BasicContainer<BasicList<T>> {
   @Nullable private T selectedItem;
   @Nullable private Consumer<T> onSelectConsumer;
 
-  public BasicList(final MalisisGui gui, final int width, final int height) {
-    super(gui, width, height);
+  public BasicList(final int width, final int height) {
+    super(width, height);
 
-    this.scrollbar = new UISlimScrollbar(gui, this, UIScrollBar.Type.VERTICAL);
-    this.scrollbar.setAutoHide(true);
+    this.scrollbar = new UISlimScrollbar(this, UIScrollBar.Type.VERTICAL);
+    this.scrollbar.autoHide = true;
 
     this.setBackgroundAlpha(0);
+  }
+
+  /**
+   * @deprecated components no longer take their gui, use {@link #BasicList(int, int)}
+   */
+  @Deprecated
+  public BasicList(final MalisisGui gui, final int width, final int height) {
+    this(width, height);
   }
 
   public int getSize() {
@@ -364,14 +372,10 @@ public class BasicList<T> extends BasicContainer<BasicList<T>> {
     this.isDirty = true;
   }
 
-   /**
-   * Creates item components based on the current factory and data set
-   */
   public void createItemComponents() {
-    final float scrollPoint = this.getScrollBar().getOffset();
+    final float scrollPoint = this.getScrollBar().offset();
     final Integer focusedX = MalisisGui.getFocusedComponent() == null ? null : MalisisGui.getFocusedComponent().screenX();
     final Integer focusedY = MalisisGui.getFocusedComponent() == null ? null : MalisisGui.getFocusedComponent().screenY();
-
     final boolean wasItemFocused = focusedX != null && focusedY != null && this.getComponentAt(focusedX, focusedY) != null;
 
     this.removeAll();
@@ -402,12 +406,8 @@ public class BasicList<T> extends BasicContainer<BasicList<T>> {
   }
 
   @Override
-  public ClipArea getClipArea() {
-    return new ClipArea(this, this, true);
+  public void setClipContent(final boolean clipContent) {
   }
-
-  @Override
-  public void setClipContent(final boolean clipContent) {}
 
   @Override
   public boolean shouldClipContent() {
@@ -420,20 +420,24 @@ public class BasicList<T> extends BasicContainer<BasicList<T>> {
   }
 
   @Override
-  public void draw(final GuiRenderer renderer, final int mouseX, final int mouseY, final float partialTick) {
+  public void render(final GuiRenderer renderer) {
     if (this.isDirty) {
       this.createItemComponents();
     }
-
-    super.draw(renderer, mouseX, mouseY, partialTick);
+    super.render(renderer);
   }
 
+  /**
+   * A row of a {@link BasicList}. Subclasses keep the (gui, parent, item) constructor used by the item component factory of the list,
+   * and add their children in {@link #construct(MalisisGui)}.
+   */
   public static class ItemComponent<T> extends BasicContainer<ItemComponent<T>> {
 
     private static final int BORDER_COLOR = 0x808080;
     private static final int INNER_COLOR = 0x000000;
     private static final int INNER_HOVER_COLOR = 0x282828;
     private static final int INNER_SELECTED_COLOR = 0x414141;
+
     protected T item;
     @Nullable private Consumer<T> onDoubleClick;
 
@@ -442,8 +446,6 @@ public class BasicList<T> extends BasicContainer<BasicList<T>> {
     }
 
     public ItemComponent(final MalisisGui gui, final BasicList<T> parent, final T item, @Nullable final Consumer<T> onDoubleClick) {
-      super(gui);
-
       // Set the parent
       this.setParent(parent);
 
@@ -461,7 +463,7 @@ public class BasicList<T> extends BasicContainer<BasicList<T>> {
       this.setBorder(BORDER_COLOR, 1, 255);
 
       // Set default size
-      setSize(UIComponent.INHERITED, 15);
+      setSize(0, 15);
 
       this.construct(gui);
     }
@@ -483,17 +485,16 @@ public class BasicList<T> extends BasicContainer<BasicList<T>> {
       return false;
     }
 
-    protected void construct(final MalisisGui gui) {}
+    protected void construct(final MalisisGui gui) {
+    }
 
     @SuppressWarnings("unchecked")
     @Override
-    public boolean onClick(final int x, final int y) {
-      final UIComponent component = getComponentAt(x, y);
-
+    public boolean onClick() {
+      final UIComponent component = getComponentAt(MalisisGui.MOUSE_POSITION.x(), MalisisGui.MOUSE_POSITION.y());
       final BasicList parent = (BasicList) this.parent;
 
       if (this.equals(component) || !this.equals(component) && !parent.canInternalClick && hasParent(this, component)) {
-
         if (parent.isReadOnly()) {
           return false;
         }
@@ -504,44 +505,42 @@ public class BasicList<T> extends BasicContainer<BasicList<T>> {
           parent.setSelectedItem(this.item, false);
         }
       }
-
       return true;
     }
 
     @Override
-    public void drawBackground(final GuiRenderer renderer, final int mouseX, final int mouseY, final float partialTick) {
+    public void render(final GuiRenderer renderer) {
       if (this.parent instanceof BasicList) {
-        final BasicList parent = (BasicList) this.parent;
-
+        final BasicList<?> parent = (BasicList<?>) this.parent;
+        // Fill the width of the list, less the scrollbar when it shows
         final int width = parent.getWidth() - parent.getLeftPadding() - parent.getRightPadding() - (parent.getScrollBar().isEnabled() ?
-          parent.getScrollBar().getRawWidth() + 5 : 0);
+          parent.getScrollBar().getWidth() + 5 : 0);
+        if (width != this.getWidth()) {
+          this.setSize(width, this.getRawHeight());
+        }
 
-        this.setSize(width, getHeight());
-
-        final UIComponent<?> componentAt = this.getComponentAt(mouseX, mouseY);
+        final UIComponent hovered = MalisisGui.getHoveredComponent();
         if (parent.getSelectedItem() == this.item) {
           this.setColor(INNER_SELECTED_COLOR);
-        } else if (componentAt != null && componentAt.getGui() == MalisisGui.currentGui() && (this.equals(componentAt) || this
-          .equals(componentAt.getParent()))) {
+        } else if (hovered != null && (this.equals(hovered) || this.equals(hovered.getParent()))) {
           this.setColor(INNER_HOVER_COLOR);
         } else {
           this.setColor(INNER_COLOR);
         }
-
-        super.drawBackground(renderer, mouseX, mouseY, partialTick);
       }
+      super.render(renderer);
     }
 
     @Override
-    public boolean onDoubleClick(final int x, final int y, final MouseButton button) {
+    public boolean onDoubleClick(final MouseButton button) {
       if (button != MouseButton.LEFT) {
-        return super.onDoubleClick(x, y, button);
+        return super.onDoubleClick(button);
       }
 
-      final UIComponent<?> componentAt = this.getComponentAt(x, y);
-      final UIComponent<?> parentComponentAt = componentAt == null ? null : componentAt.getParent();
+      final UIComponent componentAt = this.getComponentAt(MalisisGui.MOUSE_POSITION.x(), MalisisGui.MOUSE_POSITION.y());
+      final UIComponent parentComponentAt = componentAt == null ? null : componentAt.getParent();
       if (!(componentAt instanceof BasicList.ItemComponent) && !(parentComponentAt instanceof BasicList.ItemComponent)) {
-        return super.onDoubleClick(x, y, button);
+        return super.onDoubleClick(button);
       }
 
       if (this.onDoubleClick != null) {
@@ -563,18 +562,24 @@ public class BasicList<T> extends BasicContainer<BasicList<T>> {
     }
 
     @Override
-    public void drawForeground(final GuiRenderer renderer, final int mouseX, final int mouseY, final float partialTick) {
-      renderer.drawText(TextFormatting.WHITE + item.toString(), 2, 3, 0);
+    protected void construct(final MalisisGui gui) {
+      final UILabel label = new UILabel(this.item.toString());
+      label.setFontOptions(FontColors.WHITE_FO);
+      // 6.5.x drew the text at 2,3 from the corner of the row, inside its padding of 3
+      label.setPosition(-1, 0);
+      this.add(label);
     }
   }
 
   public static class ItemsChangedEvent<T> extends ComponentEvent<BasicList<T>> {
+
     public ItemsChangedEvent(final BasicList<T> component) {
       super(component);
     }
   }
 
   public static class SelectEvent<T> extends ComponentEvent.ValueChange<BasicList<T>, T> {
+
     public SelectEvent(final BasicList<T> component, @Nullable final T oldValue, @Nullable final T newValue) {
       super(component, oldValue, newValue);
     }

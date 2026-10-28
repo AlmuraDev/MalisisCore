@@ -24,17 +24,15 @@
  */
 package net.malisis.core.client.gui.component.container;
 
-import net.malisis.core.client.gui.BasicScreen;
-import net.malisis.core.client.gui.component.decoration.BasicLine;
-import net.malisis.core.util.FontColors;
-import net.malisis.core.util.TriFunction;
 import com.google.common.eventbus.Subscribe;
 import net.malisis.core.client.gui.Anchor;
-import net.malisis.core.client.gui.GuiRenderer;
+import net.malisis.core.client.gui.BasicScreen;
 import net.malisis.core.client.gui.MalisisGui;
-import net.malisis.core.client.gui.component.UIComponent;
+import net.malisis.core.client.gui.component.decoration.BasicLine;
 import net.malisis.core.client.gui.component.decoration.UILabel;
 import net.malisis.core.client.gui.event.ComponentEvent;
+import net.malisis.core.util.FontColors;
+import net.malisis.core.util.TriFunction;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -51,19 +49,26 @@ public class BasicDualListContainer<T> extends BasicContainer<BasicDualListConta
   protected BasicContainer<?> leftContainer, middleContainer, rightContainer;
   protected BasicList<T> leftDynamicList, rightDynamicList;
 
+  public BasicDualListContainer(final int width, final int height, final String leftTitle, final String rightTitle,
+    final TriFunction<MalisisGui, BasicList<T>, T, ? extends BasicList.ItemComponent<?>> leftComponentFactory,
+    final TriFunction<MalisisGui, BasicList<T>, T, ? extends BasicList.ItemComponent<?>> rightComponentFactory) {
+    super(width, height);
+    this.leftTitle = leftTitle;
+    this.rightTitle = rightTitle;
+    this.leftDynamicList = new BasicList<>(0, 0);
+    this.rightDynamicList = new BasicList<>(0, 0);
+    this.leftComponentFactory = leftComponentFactory;
+    this.rightComponentFactory = rightComponentFactory;
+  }
+
+  /**
+   * @deprecated components no longer take their gui, use {@link #BasicDualListContainer(int, int, String, String, TriFunction, TriFunction)}
+   */
+  @Deprecated
   public BasicDualListContainer(final MalisisGui gui, final int width, final int height, final String leftTitle, final String rightTitle,
     final TriFunction<MalisisGui, BasicList<T>, T, ? extends BasicList.ItemComponent<?>> leftComponentFactory,
     final TriFunction<MalisisGui, BasicList<T>, T, ? extends BasicList.ItemComponent<?>> rightComponentFactory) {
-    super(gui, width, height);
-
-    this.leftTitle = leftTitle;
-    this.rightTitle = rightTitle;
-
-    this.leftDynamicList = new BasicList<>(gui, UIComponent.INHERITED, UIComponent.INHERITED);
-    this.rightDynamicList = new BasicList<>(gui, UIComponent.INHERITED, UIComponent.INHERITED);
-
-    this.leftComponentFactory = leftComponentFactory;
-    this.rightComponentFactory = rightComponentFactory;
+    this(width, height, leftTitle, rightTitle, leftComponentFactory, rightComponentFactory);
   }
 
   protected void construct(final MalisisGui gui) {
@@ -75,12 +80,11 @@ public class BasicDualListContainer<T> extends BasicContainer<BasicDualListConta
     final int middleContainerWidth = this.middleContainer == null ? 0 : this.middleContainer.getWidth();
 
     // Create left container
-    this.leftContainer = new BasicContainer(gui, (this.width - middleContainerWidth - 5) / 2, UIComponent.INHERITED);
+    this.leftContainer = new BasicContainer<>((this.getWidth() - middleContainerWidth - 5) / 2, 0);
     this.leftContainer.setBackgroundAlpha(0);
-    this.leftContainer.setPadding(4, 4);
-    this.leftContainer.setTopPadding(20);
+    this.leftContainer.setPadding(4, 20, 4, 4);
 
-    final UILabel leftContainerLabel = new UILabel(gui, this.leftTitle);
+    final UILabel leftContainerLabel = new UILabel(this.leftTitle);
     leftContainerLabel.setPosition(0, -15, Anchor.TOP | Anchor.CENTER);
 
     this.leftDynamicList.setItemComponentFactory(this.leftComponentFactory);
@@ -92,13 +96,12 @@ public class BasicDualListContainer<T> extends BasicContainer<BasicDualListConta
     this.leftContainer.add(leftContainerLabel, this.leftDynamicList);
 
     // Create right container
-    this.rightContainer = new BasicContainer(gui, (this.width - middleContainerWidth - 5) / 2, UIComponent.INHERITED);
+    this.rightContainer = new BasicContainer<>((this.getWidth() - middleContainerWidth - 5) / 2, 0);
     this.rightContainer.setBackgroundAlpha(0);
-    this.rightContainer.setPadding(4, 4);
-    this.rightContainer.setTopPadding(20);
+    this.rightContainer.setPadding(4, 20, 4, 4);
     this.rightContainer.setAnchor(Anchor.TOP | Anchor.RIGHT);
 
-    final UILabel rightContainerLabel = new UILabel(gui, this.rightTitle);
+    final UILabel rightContainerLabel = new UILabel(this.rightTitle);
     rightContainerLabel.setPosition(0, -15, Anchor.TOP | Anchor.CENTER);
 
     this.rightDynamicList.setPosition(0, 0, Anchor.TOP | Anchor.RIGHT);
@@ -110,34 +113,29 @@ public class BasicDualListContainer<T> extends BasicContainer<BasicDualListConta
 
     this.rightContainer.add(rightContainerLabel, this.rightDynamicList);
 
-    final BasicLine titleLine = new BasicLine(gui, this.getRawWidth() - (this.getLeftBorderSize() + this.getRightBorderSize()));
+    final int innerWidth = this.getRawWidth() - (this.getLeftBorderSize() + this.getRightBorderSize());
+    final BasicLine titleLine = new BasicLine(innerWidth);
     titleLine.setPosition(0, BasicScreen.getPaddedY(leftContainerLabel, 2));
 
-    this.add(this.leftContainer, this.middleContainer, this.rightContainer, titleLine);
-  }
+    this.add(this.leftContainer);
+    if (this.middleContainer != null) {
+      this.add(this.middleContainer);
+    }
+    this.add(this.rightContainer, titleLine);
 
-  @Override
-  public void drawBackground(final GuiRenderer renderer, final int mouseX, final int mouseY, final float partialTick) {
-    super.drawBackground(renderer, mouseX, mouseY, partialTick);
+    // Lines drawn by hand in 6.5.x: under the titles, and down the middle around the middle container
+    final BasicLine headerLine = new BasicLine(innerWidth);
+    headerLine.setPosition(this.getLeftBorderSize(), this.leftContainer.getTopPadding() - 4);
 
-    final int startX = this.width / 2;
+    final int startX = this.getWidth() / 2;
     final int middleContainerHeight = this.middleContainer == null ? 0 : this.middleContainer.getHeight();
-    final int halfHeight = (this.height - middleContainerHeight - this.getTopBorderSize()) / 2;
-    int startY = 1;
+    final int halfHeight = (this.getHeight() - middleContainerHeight - this.getTopBorderSize()) / 2;
+    final BasicLine upperLine = new BasicLine(halfHeight, true);
+    upperLine.setPosition(startX, 1);
+    final BasicLine lowerLine = new BasicLine(halfHeight, true);
+    lowerLine.setPosition(startX, 1 + halfHeight + middleContainerHeight - 1);
 
-    // Draw: top-left -> top-right (title line)
-    renderer.drawRectangle(this.getLeftBorderSize(), this.leftContainer.getTopPadding() - 4, 1,
-      this.getRawWidth() - (this.getLeftBorderSize() + this.getRightBorderSize()), 1, FontColors.WHITE, 185);
-
-    // Draw: top -> middle_section
-    renderer.drawRectangle(startX, startY, 50, 1, halfHeight, FontColors.WHITE, 185);
-    startY += halfHeight;
-
-    // Skip: middle_section
-    startY += middleContainerHeight - 1;
-
-    // Draw: middle_section -> bottom
-    renderer.drawRectangle(startX, startY, 50, 1, halfHeight, FontColors.WHITE, 185);
+    this.add(headerLine, upperLine, lowerLine);
   }
 
   @Subscribe

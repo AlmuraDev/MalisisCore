@@ -24,11 +24,15 @@
  */
 package net.malisis.core.client.gui;
 
-import net.malisis.core.util.FontColors;
-import net.malisis.core.client.gui.component.container.UIBackgroundContainer;
+import net.malisis.core.client.gui.component.container.BasicContainer;
 import net.malisis.core.client.gui.component.decoration.UILabel;
+import net.malisis.core.client.gui.render.GuiIcon;
+import net.malisis.core.client.gui.render.shape.GuiShape;
+import net.malisis.core.util.FontColors;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+
+import java.util.function.IntSupplier;
 
 import javax.annotation.Nullable;
 
@@ -46,96 +50,67 @@ public class BasicContainerScreen extends BasicScreen {
   @Override
   public void construct() {
     if (!this.title.isEmpty()) {
-      final UILabel titleLabel = new UILabel(this, this.title);
+      final UILabel titleLabel = new UILabel(this.title);
       titleLabel.setFontOptions(FontColors.WHITE_FO);
       titleLabel.setPosition(0, 20, Anchor.TOP | Anchor.CENTER);
-
       this.addToScreen(titleLabel);
     }
+
     this.container = new UIVanillaContainer(this);
     this.container.setBackgroundAlpha(0);
     this.container.setPosition(0, 36);
-    this.container.setSize(this.width, this.height - 102);
     this.container.setClipContent(true);
     this.addToScreen(this.container);
   }
 
-  /**
-   * Gets the primary container for the screen
-   *
-   * @return The primary container
-   */
-  public UIBackgroundContainer getContainer() {
+  public BasicContainer<?> getContainer() {
     return this.container;
   }
 
-  /**
-   * Gets the screen's title
-   *
-   * @return The title
-   */
   public String getTitle() {
     return this.title;
   }
 
-  /**
-   * Sets the screen's title
-   *
-   * @param title The title
-   */
   public void setTitle(final String title) {
     this.title = title;
   }
 
-
-  private static class UIVanillaContainer extends UIBackgroundContainer {
+  /**
+   * The area under the title, darkened like vanilla lists, with gradient top and bottom edges. Fills the width of the screen.
+   */
+  private static class UIVanillaContainer extends BasicContainer<UIVanillaContainer> {
 
     private static final int CONTAINER_COLOR = FontColors.BLACK;
     private static final int BORDER_HEIGHT = 4;
-    private final MalisisGui gui;
+    private static final int SPACE_AROUND = 104;
 
     private UIVanillaContainer(final MalisisGui gui) {
-      super(gui);
-      this.gui = gui;
+      // ITransformable declares a Size type that hides the GUI's: fully qualified here
+      this.setSize(net.malisis.core.client.gui.element.size.Size.of(() -> gui.width, () -> gui.height - SPACE_AROUND));
+
+      final GuiShape top = this.band(() -> -BORDER_HEIGHT, () -> BORDER_HEIGHT, 255, 120);
+      final GuiShape middle = this.band(() -> 0, () -> this.getHeight(), 120, 120);
+      final GuiShape bottom = this.band(this::getHeight, () -> BORDER_HEIGHT, 120, 255);
+      final net.malisis.core.client.gui.render.IGuiRenderer background = this.backgroundRenderer.get();
+      this.setBackground(renderer -> {
+        if (background != null) {
+          background.render(renderer);
+        }
+        top.render(renderer);
+        middle.render(renderer);
+        bottom.render(renderer);
+        renderer.next();
+      });
     }
 
-    @Override
-    public void drawBackground(final GuiRenderer renderer, final int mouseX, final int mouseY, final float partialTick) {
-      super.drawBackground(renderer, mouseX, mouseY, partialTick);
-
-      renderer.enableBlending();
-      renderer.disableTextures();
-      this.rp.usePerVertexAlpha.set(true);
-      this.rp.usePerVertexColor.set(true);
-
-      // Top border
-      this.shape.resetState();
-      this.shape.setSize(this.gui.width, BORDER_HEIGHT);
-      this.shape.setPosition(0, -4);
-      this.shape.getVertexes("Top").forEach(row -> row.setColor(CONTAINER_COLOR).setAlpha(255));
-      this.shape.getVertexes("Bottom").forEach(row -> row.setColor(0).setAlpha(120));
-      renderer.drawShape(this.shape, this.rp);
-
-      // Middle
-      this.shape.resetState();
-      this.shape.setSize(this.gui.width, this.gui.height - 104);
-      this.shape.setPosition(0, 0);
-      this.shape.getVertexes("Top").forEach(row -> row.setColor(CONTAINER_COLOR).setAlpha(120));
-      this.shape.getVertexes("Bottom").forEach(row -> row.setColor(0).setAlpha(120));
-      renderer.drawShape(this.shape, this.rp);
-
-      // Bottom border
-      this.shape.resetState();
-      this.shape.setSize(this.gui.width, BORDER_HEIGHT);
-      this.shape.setPosition(0, this.gui.height - 104);
-      this.shape.getVertexes("Top").forEach(row -> row.setColor(CONTAINER_COLOR).setAlpha(120));
-      this.shape.getVertexes("Bottom").forEach(row -> row.setColor(0).setAlpha(255));
-      renderer.drawShape(this.shape, this.rp);
-      renderer.next();
-
-      this.setSize(this.gui.width, this.gui.height - 104);
-
-      renderer.enableTextures();
+    private GuiShape band(final IntSupplier y, final IntSupplier height, final int topAlpha, final int bottomAlpha) {
+      return GuiShape.builder(this)
+        .position(s -> net.malisis.core.client.gui.element.position.Position.of(() -> 0, y))
+        .size(s -> net.malisis.core.client.gui.element.size.Size.of(this::getWidth, height))
+        .color(CONTAINER_COLOR)
+        .alpha((fp, vp) -> vp.y() == 0 ? topAlpha : bottomAlpha)
+        .icon(GuiIcon.NONE)
+        .build();
     }
   }
 }

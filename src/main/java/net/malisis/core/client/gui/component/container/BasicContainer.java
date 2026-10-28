@@ -406,6 +406,18 @@ public class BasicContainer<T extends BasicContainer<T>> extends UIContainer imp
   }
 
   /**
+   * Sets the horizontal (left and right) and vertical (top and bottom) padding.
+   *
+   * @param horizontal The left and right padding
+   * @param vertical The top and bottom padding
+   * @return The container with applied changes
+   */
+  public BasicContainer<T> setPadding(final int horizontal, final int vertical) {
+    this.setPadding(Padding.of(horizontal, vertical));
+    return this;
+  }
+
+  /**
    * Sets the padding per side.
    *
    * @param left The left padding

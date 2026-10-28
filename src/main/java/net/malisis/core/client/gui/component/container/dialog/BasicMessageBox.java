@@ -31,10 +31,9 @@ import net.malisis.core.client.gui.component.interaction.button.builder.UIButton
 import net.malisis.core.util.FontColors;
 import com.google.common.eventbus.Subscribe;
 import net.malisis.core.client.gui.Anchor;
-import net.malisis.core.client.gui.MalisisGui;
-import net.malisis.core.client.gui.component.container.UIBackgroundContainer;
-import net.malisis.core.client.gui.component.control.UIScrollBar;
-import net.malisis.core.client.gui.component.control.UISlimScrollbar;
+import net.malisis.core.client.gui.component.container.UIContainer;
+import net.malisis.core.client.gui.component.scrolling.UIScrollBar;
+import net.malisis.core.client.gui.component.scrolling.UISlimScrollbar;
 import net.malisis.core.client.gui.component.decoration.UILabel;
 import net.malisis.core.client.gui.component.interaction.UIButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -59,13 +58,13 @@ public class BasicMessageBox extends BasicForm {
   @Nullable private final Consumer<MessageBoxResult> consumer;
   @Nullable private MessageBoxResult result;
 
-  private BasicMessageBox(final MalisisGui gui, final String title, final String message, final MessageBoxButtons buttons,
+  private BasicMessageBox(final String title, final String message, final MessageBoxButtons buttons,
     @Nullable final Consumer<MessageBoxResult> consumer) {
-    super(gui, 300, 115, title);
+    super(300, 115, title);
     this.messageBoxButtons = buttons;
     this.message = message;
     this.consumer = consumer;
-    this.construct(gui);
+    this.construct();
     this.setClosable(true);
   }
 
@@ -79,40 +78,40 @@ public class BasicMessageBox extends BasicForm {
     screen.display();
   }
 
-  private void construct(final MalisisGui gui) {
-    setBottomPadding(bottomPadding);
+  private void construct() {
+    setPadding(getLeftPadding(), getTopPadding(), getRightPadding(), bottomPadding);
 
     if (!this.message.isEmpty()) {
-      final UILabel messageLabel = new UILabel(gui, this.message, true);
+      final UILabel messageLabel = new UILabel(this.message, true);
       messageLabel.setSize(BasicScreen.getPaddedWidth(this), BasicScreen.getPaddedHeight(this) - (buttonPadding * 2));
       messageLabel.setFontOptions(FontColors.WHITE_FO);
 
-      final UISlimScrollbar scrollbar = new UISlimScrollbar(gui, messageLabel, UIScrollBar.Type.VERTICAL);
-      scrollbar.setAutoHide(true);
+      final UISlimScrollbar scrollbar = new UISlimScrollbar(messageLabel, UIScrollBar.Type.VERTICAL);
+      scrollbar.autoHide = true;
       add(messageLabel.setAnchor(Anchor.CENTER | Anchor.MIDDLE));
     }
 
-    final UIBackgroundContainer buttonContainer = new UIBackgroundContainer(gui);
+    final UIContainer buttonContainer = new UIContainer();
     final List<UIButton> buttons = new ArrayList<>();
     switch (this.messageBoxButtons) {
       case OK:
-        buttons.add(buildButton(gui, "button.ok"));
+        buttons.add(buildButton("button.ok"));
         break;
       case OK_CANCEL:
-        buttons.add(buildButton(gui, "button.ok"));
-        buttons.add(buildButton(gui, "button.cancel"));
+        buttons.add(buildButton("button.ok"));
+        buttons.add(buildButton("button.cancel"));
         break;
       case YES_NO:
-        buttons.add(buildButton(gui, "button.yes"));
-        buttons.add(buildButton(gui, "button.no"));
+        buttons.add(buildButton("button.yes"));
+        buttons.add(buildButton("button.no"));
         break;
       case YES_NO_CANCEL:
-        buttons.add(buildButton(gui, "button.yes"));
-        buttons.add(buildButton(gui, "button.no"));
-        buttons.add(buildButton(gui, "button.cancel"));
+        buttons.add(buildButton("button.yes"));
+        buttons.add(buildButton("button.no"));
+        buttons.add(buildButton("button.cancel"));
         break;
       case CLOSE:
-        buttons.add(buildButton(gui, "button.close"));
+        buttons.add(buildButton("button.close"));
     }
 
     int width = 0;
@@ -126,7 +125,6 @@ public class BasicMessageBox extends BasicForm {
     width += buttonPadding * (buttons.size() - 1);
     buttonContainer.setSize(width, UIConstants.Button.HEIGHT_TINY);
     buttonContainer.setPosition(0, bottomPadding + -buttonPadding, Anchor.BOTTOM | Anchor.RIGHT);
-    buttonContainer.setBackgroundAlpha(0);
     add(buttonContainer);
   }
 
@@ -191,22 +189,22 @@ public class BasicMessageBox extends BasicForm {
     super.onClose();
   }
 
-  private UIButton buildButton(final MalisisGui gui, final String name) {
+  private UIButton buildButton(final String name) {
     switch (name.toLowerCase()) {
       case "button.cancel":
-        return new UIButtonBuilder(gui).text(I18n.format(I18n.format("gui.cancel")))
+        return new UIButtonBuilder().text(I18n.format(I18n.format("gui.cancel")))
           .size(UIConstants.Button.WIDTH_TINY, UIConstants.Button.HEIGHT_TINY).listener(this).build("button.cancel");
       case "button.close":
-        return new UIButtonBuilder(gui).text(I18n.format(I18n.format("almura.menu_button.close")))
+        return new UIButtonBuilder().text(I18n.format(I18n.format("almura.menu_button.close")))
           .size(UIConstants.Button.WIDTH_TINY, UIConstants.Button.HEIGHT_TINY).listener(this).build("button.close");
       case "button.no":
-        return new UIButtonBuilder(gui).text(I18n.format(I18n.format("gui.no"))).size(UIConstants.Button.WIDTH_TINY, UIConstants.Button.HEIGHT_TINY)
+        return new UIButtonBuilder().text(I18n.format(I18n.format("gui.no"))).size(UIConstants.Button.WIDTH_TINY, UIConstants.Button.HEIGHT_TINY)
           .listener(this).build("button.no");
       case "button.yes":
-        return new UIButtonBuilder(gui).text(I18n.format(I18n.format("gui.yes"))).size(UIConstants.Button.WIDTH_TINY, UIConstants.Button.HEIGHT_TINY)
+        return new UIButtonBuilder().text(I18n.format(I18n.format("gui.yes"))).size(UIConstants.Button.WIDTH_TINY, UIConstants.Button.HEIGHT_TINY)
           .listener(this).build("button.yes");
       default:
-        return new UIButtonBuilder(gui).text(I18n.format(I18n.format("almura.menu_button.ok")))
+        return new UIButtonBuilder().text(I18n.format(I18n.format("almura.menu_button.ok")))
           .size(UIConstants.Button.WIDTH_TINY, UIConstants.Button.HEIGHT_TINY).listener(this).build("button.ok");
     }
   }
@@ -234,9 +232,12 @@ public class BasicMessageBox extends BasicForm {
       guiscreenBackground = false;
       // Disable escape key press
       registerKeyListener((keyChar, keyCode) -> keyCode == Keyboard.KEY_ESCAPE);
-      addToScreen(
-        new BasicMessageBox(this, title, message, buttons, consumer).setMovable(true).setPosition(0, 0, Anchor.MIDDLE | Anchor.CENTER).setZIndex(50)
-          .setBackgroundAlpha(255));
+      final BasicMessageBox messageBox = new BasicMessageBox(title, message, buttons, consumer);
+      messageBox.setMovable(true);
+      messageBox.setPosition(0, 0, Anchor.MIDDLE | Anchor.CENTER);
+      messageBox.setZIndex(50);
+      messageBox.setBackgroundAlpha(255);
+      addToScreen(messageBox);
     }
 
     @Nullable
