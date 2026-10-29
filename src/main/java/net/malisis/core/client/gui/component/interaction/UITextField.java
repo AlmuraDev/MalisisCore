@@ -24,6 +24,7 @@
 
 package net.malisis.core.client.gui.component.interaction;
 
+import java.util.List;
 import java.util.function.Function;
 
 import org.lwjgl.input.Keyboard;
@@ -48,6 +49,7 @@ import net.malisis.core.client.gui.render.GuiIcon;
 import net.malisis.core.client.gui.render.GuiRenderer;
 import net.malisis.core.client.gui.render.shape.GuiShape;
 import net.malisis.core.client.gui.text.GuiText;
+import net.malisis.core.client.gui.text.GuiText.LineInfo;
 import net.malisis.core.renderer.font.FontOptions;
 import net.malisis.core.renderer.font.StringWalker;
 import net.malisis.core.util.MouseButton;
@@ -772,18 +774,38 @@ public class UITextField extends UIComponent implements IContentHolder, IClipabl
 		Cursor first = cursor.index < selectionCursor.index ? cursor : selectionCursor;
 		Cursor last = cursor == first ? selectionCursor : cursor;
 
-		GuiShape s = GuiShape	.builder(this)
-								.position(first)
-								.fixed(false)
-								.size(last.x() - first.x(), cursor.height())
-								.color(selectColor)
-								.build();
-		s.render(renderer);
+		if (first.lineIndex == last.lineIndex)
+			drawSelection(renderer, first.x(), first.y(), last.x() - first.x(), cursor.height());
+		else
+		{
+			//one box per line: the rest of the first line, whole lines between, the start of the last line
+			List<LineInfo> lines = guiText.lines();
+			int spacing = guiText.getFontOptions().lineSpacing();
+			int y = 0;
+			for (int l = 0; l <= last.lineIndex && l < lines.size(); l++)
+			{
+				LineInfo info = lines.get(l);
+				if (l >= first.lineIndex)
+				{
+					int from = l == first.lineIndex ? first.x : 0;
+					int to = l == last.lineIndex ? last.x : Math.max(info.width(), from);
+					drawSelection(renderer, from + 2, y + 2, to - from, Math.max(info.height(), 9));
+				}
+				y += info.height() + spacing;
+			}
+		}
 
 		renderer.next();
 
 		GL11.glDisable(GL11.GL_COLOR_LOGIC_OP);
 		GL11.glEnable(GL11.GL_TEXTURE_2D);
+	}
+
+	private void drawSelection(GuiRenderer renderer, int x, int y, int width, int height)
+	{
+		if (width <= 0)
+			return;
+		GuiShape.builder(this).position(x, y).fixed(false).size(width, height).color(selectColor).build().render(renderer);
 	}
 
 	@Subscribe
@@ -864,6 +886,26 @@ public class UITextField extends UIComponent implements IContentHolder, IClipabl
 			return height;
 		}
 
+		/**
+		 * Gets a walker on the last character at or before {@code index}, or before the first character when there is none.<br>
+		 * The walker steps over formatting codes, so walking to an index inside one would never stop and run to the end of the text.
+		 *
+		 * @param index the index
+		 * @return the walker
+		 */
+		private StringWalker walkerAt(int index)
+		{
+			int target = -1;
+			StringWalker probe = guiText.walker();
+			while (probe.walk() && probe.globalIndex() <= index)
+				target = probe.globalIndex();
+
+			StringWalker walker = guiText.walker();
+			if (target >= 0)
+				walker.walkToIndex(target);
+			return walker;
+		}
+
 		private StringWalker back(StringWalker walker)
 		{
 			//			if (walker.getChar() == '\n')
@@ -896,6 +938,9 @@ public class UITextField extends UIComponent implements IContentHolder, IClipabl
 			{
 				x = 0;
 				y += height;
+				//on that line too, before its first character (the selection box draws by line)
+				lineIndex++;
+				charIndex = -1;
 			}
 
 			onCursorUpdated();
@@ -928,7 +973,8 @@ public class UITextField extends UIComponent implements IContentHolder, IClipabl
 			walker.walkToX(x);
 			walker = back(walker);
 			int i = walker.globalIndex();
-			if (x > walker.x() + walker.width() / 2)
+			//past the end of a line the cursor stays on it, before its \n rather than on the next line
+			if (x > walker.x() + walker.width() / 2 && walker.getChar() != '\n')
 				i++;
 			jumpTo(i);
 			lastX = x;
@@ -942,11 +988,7 @@ public class UITextField extends UIComponent implements IContentHolder, IClipabl
 		public void jumpTo(int index)
 		{
 			index = MathHelper.clamp(index, 0, text.length());
-			StringWalker walker = guiText.walker();
-			//a new walker is already before the first character: walking to -1 would run to the end
-			if (index > 0)
-				walker.walkToIndex(index - 1);
-			set(walker);
+			set(walkerAt(index - 1));
 			lastX = x;
 			onCursorUpdated();
 		}
@@ -984,8 +1026,7 @@ public class UITextField extends UIComponent implements IContentHolder, IClipabl
 
 		public void jumpToLineEnd()
 		{
-			StringWalker walker = guiText.walker();
-			walker.walkToIndex(index);
+			StringWalker walker = walkerAt(index);
 			walker.walkToEOL();
 			walker = back(walker);
 			set(walker);
