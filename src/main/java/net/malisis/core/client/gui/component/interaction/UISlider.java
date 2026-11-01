@@ -38,8 +38,11 @@ import net.malisis.core.client.gui.render.shape.GuiShape;
 import net.malisis.core.client.gui.text.GuiText;
 import net.malisis.core.renderer.font.FontOptions;
 import net.malisis.core.util.MouseButton;
+import net.malisis.core.util.Silenced;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextFormatting;
+
+import java.util.Objects;
 
 /**
  * @author Ordinastie
@@ -71,11 +74,15 @@ public class UISlider<T> extends UIComponent implements IContentHolder
 		this.converter = checkNotNull(converter);
 		this.value = converter.convert(0F);
 
+		//6.5.x labels are String.format patterns of the value ("Opacity: %d"); passed through as is, the % reached the translation and
+		//showed "Format error", so they are formatted here and shown as {label}
+		boolean formatted = text != null && text.contains("%") && !text.contains("{");
 		this.text = GuiText	.builder()
 							.parent(this)
-							.text(text)
+							.text(formatted ? "{label}" : text)
 							.position(this::textPosition, o -> middleAligned(o, 0))
 							.bind("value", this::getValue)
+							.bind("label", () -> formatted ? formatLabel(text) : "")
 							.zIndex(this::getZIndex)
 							.fontOptions(FontOptions.builder().color(0xFFFFFF).shadow().when(this::isHovered).color(0xFFFFA0).build())
 							.build();
@@ -89,7 +96,14 @@ public class UISlider<T> extends UIComponent implements IContentHolder
 										.border(5)
 										.build();
 		setBackground(GuiShape.builder(this).icon(GuiIcon.SLIDER_BG).build());
-		setForeground(this.text.and(sliderShape));
+		//text over the slider knob, as in 6.5.x
+		setForeground(sliderShape.and(this.text));
+	}
+
+	private String formatLabel(String pattern)
+	{
+		String str = Silenced.get(() -> String.format(pattern, value));
+		return str != null ? str : TextFormatting.ITALIC + "Format error";
 	}
 
 	//#region Getters/Setters
@@ -120,7 +134,7 @@ public class UISlider<T> extends UIComponent implements IContentHolder
 	 */
 	public UISlider<T> setValue(T value)
 	{
-		if (this.value == value)
+		if (Objects.equals(this.value, value))
 			return this;
 		if (!fireEvent(new ComponentEvent.ValueChange<>(this, this.value, value)))
 			return this;
@@ -161,22 +175,8 @@ public class UISlider<T> extends UIComponent implements IContentHolder
 
 	public int textPosition()
 	{
-		int w = size().width(); //width
-		int tw = text.size().width(); //text width
-		int tx = (w - tw) / 2; //text x
-		int sx = scrollPosition(); //scroll x
-
-		if (sx > w / 2)
-		{
-			if (tx + tw + 2 > sx)
-				return sx - tw - 2;
-		}
-		else
-		{
-			if (sx + SLIDER_WIDTH + 2 > tx)
-				return sx + SLIDER_WIDTH + 2;
-		}
-		return tx;
+		//centered over the knob as in 6.5.x; moving it out of the knob's way pushed longer labels out of the slider
+		return (size().width() - text.size().width()) / 2;
 	}
 
 	/**
@@ -202,8 +202,28 @@ public class UISlider<T> extends UIComponent implements IContentHolder
 	@Override
 	public boolean onScrollWheel(int delta)
 	{
-		slideTo(offset + delta * scrollStep);
+		slideTo(scrollTarget(delta));
 		return true;
+	}
+
+	/**
+	 * The offset one scroll notch moves to: the next value in the scroll direction. A slider with few values (options, 0-255)
+	 * steps one value; scrolling by {@link #scrollStep} couldn't reach the next option, the knob snapped back to its own, and it
+	 * jumped many values at a time. A slider whose value changes with any movement keeps the {@link #scrollStep}.
+	 */
+	private float scrollTarget(int delta)
+	{
+		float fine = 0.001F * Math.signum(delta);
+		float o = offset;
+		for (int i = 1; i <= 1000; i++)
+		{
+			o = MathHelper.clamp(offset + fine * i, 0, 1);
+			if (!Objects.equals(converter.convert(o), value))
+				return i == 1 ? offset + delta * scrollStep : o;
+			if (o == 0 || o == 1)
+				break;
+		}
+		return o;
 	}
 
 	@Override
