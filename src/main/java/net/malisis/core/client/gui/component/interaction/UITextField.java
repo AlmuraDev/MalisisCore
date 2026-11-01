@@ -1029,6 +1029,9 @@ public class UITextField extends UIComponent implements IContentHolder, IClipabl
 			StringWalker walker = walkerAt(index);
 			walker.walkToEOL();
 			walker = back(walker);
+			//a line ending in \n ends on it, and the cursor set after a \n belongs to the next line: stop before it instead
+			if (guiText.isMultiLine() && walker.getChar() == '\n')
+				walker = walkerAt(walker.globalIndex() - 1);
 			set(walker);
 		}
 
@@ -1072,8 +1075,10 @@ public class UITextField extends UIComponent implements IContentHolder, IClipabl
 			StringWalker walker = guiText.walker();
 			walker.walkUntil(w -> w.lineIndex() == lineIndex + (backwards ? -1 : 1));
 			walker.walkToX(lastX);
-			//if (guiText.lines().get(walker.lineIndex()).text().length() == 1)
-			//	walker = back(walker);
+			//on the line's \n (past its end, or a line of only formatting codes): stay on that line, before it; the cursor set
+			//after a \n belongs to the next line, which moving up was the line it came from, so the cursor didn't move
+			if (guiText.isMultiLine() && walker.getChar() == '\n')
+				walker = walkerAt(walker.globalIndex() - 1);
 			set(walker);
 		}
 
